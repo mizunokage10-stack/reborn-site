@@ -5,7 +5,6 @@ import { createClient } from "@supabase/supabase-js";
 import RebornShell from "@/components/reborn/shell";
 import { categories } from "@/lib/sample-data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -37,6 +36,43 @@ function slugify(title: string, id: number) {
     .replace(/-+/g, "-");
 
   return base ? `${base}-${id}` : `work-${id}`;
+}
+
+function spineStyle(category: string, index: number) {
+  const presets = {
+    小説: ["from-slate-700 to-slate-900", "from-zinc-700 to-zinc-900", "from-stone-700 to-stone-900"],
+    日記: ["from-amber-700 to-orange-900", "from-rose-700 to-rose-900", "from-neutral-700 to-neutral-900"],
+    文芸批評: ["from-emerald-700 to-emerald-950", "from-teal-700 to-slate-900", "from-cyan-700 to-cyan-950"],
+    俳句: ["from-indigo-700 to-indigo-950", "from-violet-700 to-violet-950", "from-blue-700 to-slate-900"],
+    絵: ["from-fuchsia-700 to-purple-950", "from-pink-700 to-rose-950", "from-purple-700 to-slate-950"],
+  } as const;
+
+  const fallback = ["from-stone-700 to-stone-900", "from-zinc-700 to-zinc-900", "from-neutral-700 to-neutral-900"];
+  const palette = presets[category as keyof typeof presets] ?? fallback;
+  return palette[index % palette.length];
+}
+
+function categoryShelfLabel(category: string) {
+  const labels: Record<string, string> = {
+    小説: "物語の棚",
+    日記: "日々の棚",
+    文芸批評: "批評の棚",
+    俳句: "短詩の棚",
+    絵: "図像の棚",
+  };
+
+  return labels[category] ?? "寄せられた棚";
+}
+
+function groupByCategory(works: PublishedWork[]) {
+  const visibleCategories = categories.filter((item) => item !== "すべて");
+
+  return visibleCategories
+    .map((category) => ({
+      category,
+      items: works.filter((work) => work.category === category),
+    }))
+    .filter((group) => group.items.length > 0);
 }
 
 export default function WorksPage() {
@@ -83,13 +119,17 @@ export default function WorksPage() {
     });
   }, [works, query, category]);
 
+  const groupedWorks = useMemo(() => groupByCategory(filtered), [filtered]);
+
   return (
     <RebornShell>
       <div className="grid gap-4">
         <Card className="rounded-3xl border-stone-200 shadow-sm">
           <CardHeader>
-            <CardTitle>作品一覧</CardTitle>
-            <CardDescription>公開された作品をカテゴリやキーワードから探せます。</CardDescription>
+            <CardTitle>書架</CardTitle>
+            <CardDescription>
+              寄せられた作品を、棚ごとにたどるための図書室です。背表紙を選ぶと、その本の詳細へ進めます。
+            </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
             <div className="relative">
@@ -126,38 +166,63 @@ export default function WorksPage() {
 
         {loading && (
           <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
-            作品一覧を読み込み中です...
+            書架を読み込み中です...
           </div>
         )}
 
-        {!loading && !errorMessage && filtered.length === 0 && (
+        {!loading && !errorMessage && groupedWorks.length === 0 && (
           <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
             条件に合う公開作品はまだありません。
           </div>
         )}
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((work) => (
-            <Card key={work.id} className="rounded-3xl border-stone-200 shadow-sm">
-              <CardHeader>
-                <div className="flex items-center justify-between gap-3">
-                  <Badge variant="secondary" className="rounded-full">{work.category}</Badge>
-                  <Badge className="rounded-full">公開済み</Badge>
+        <div className="grid gap-6">
+          {groupedWorks.map((group) => (
+            <section key={group.category} className="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm">
+              <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold text-stone-900">{group.category}</h2>
+                  <p className="text-sm text-stone-500">{categoryShelfLabel(group.category)}</p>
                 </div>
-                <CardTitle className="leading-7">{work.title}</CardTitle>
-                <CardDescription>
-                  {work.pen_name} ・ {new Date(work.created_at).toLocaleDateString("ja-JP")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="mb-4 text-sm leading-6 text-stone-700">
-                  {work.summary || (work.content.length > 90 ? `${work.content.slice(0, 90)}…` : work.content)}
-                </p>
-                <Button asChild variant="outline" className="rounded-2xl">
-                  <Link href={`/works/${slugify(work.title, work.id)}`}>読む</Link>
-                </Button>
-              </CardContent>
-            </Card>
+                <div className="text-sm text-stone-400">{group.items.length}冊</div>
+              </div>
+
+              <div className="rounded-[2rem] border border-stone-200 bg-stone-100 p-4">
+                <div className="flex gap-3 overflow-x-auto pb-3">
+                  {group.items.map((work, index) => (
+                    <Link
+                      key={work.id}
+                      href={`/works/${slugify(work.title, work.id)}`}
+                      className={`group relative flex h-72 w-16 shrink-0 flex-col justify-between rounded-t-xl rounded-b-md border border-black/10 bg-gradient-to-b ${spineStyle(
+                        group.category,
+                        index
+                      )} px-2 py-3 text-stone-100 shadow-md transition hover:-translate-y-1 hover:shadow-xl md:h-80 md:w-20`}
+                    >
+                      <div className="absolute inset-y-0 left-2 w-px bg-white/20" />
+                      <div className="absolute inset-y-0 right-2 w-px bg-black/20" />
+
+                      <div className="relative z-10 flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-stone-200/80 md:text-[11px]">
+                        <span>Reborn</span>
+                      </div>
+
+                      <div className="relative z-10 flex-1 py-3">
+                        <div className="writing-mode-vertical-rl mx-auto h-full text-center text-sm font-medium leading-6 tracking-[0.08em] text-stone-50 md:text-base">
+                          {work.title}
+                        </div>
+                      </div>
+
+                      <div className="relative z-10 border-t border-white/20 pt-2 text-[10px] leading-4 text-stone-200/85 md:text-xs">
+                        <div className="line-clamp-2">{work.pen_name}</div>
+                      </div>
+
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 rounded-b-md bg-black/15 opacity-80" />
+                      <div className="pointer-events-none absolute inset-0 rounded-t-xl rounded-b-md ring-1 ring-inset ring-white/10" />
+                    </Link>
+                  ))}
+                </div>
+                <div className="mt-2 h-3 rounded-full bg-stone-300/80 shadow-inner" />
+              </div>
+            </section>
           ))}
         </div>
       </div>
