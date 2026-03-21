@@ -10,6 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 export default function SubmitPage() {
   const [penName, setPenName] = useState("");
   const [email, setEmail] = useState("");
@@ -27,8 +31,33 @@ export default function SubmitPage() {
   const handleSubmit = async () => {
     setMessage("");
 
-    if (!penName || !email || !title || !selectedCategory || !content) {
-      setMessage("必須項目を入力してください。");
+    if (!penName.trim()) {
+      setMessage("ペンネームを入力してください。");
+      return;
+    }
+
+    if (!email.trim()) {
+      setMessage("メールアドレスを入力してください。");
+      return;
+    }
+
+    if (!isValidEmail(email.trim())) {
+      setMessage("正しいメールアドレス形式で入力してください。");
+      return;
+    }
+
+    if (!title.trim()) {
+      setMessage("作品タイトルを入力してください。");
+      return;
+    }
+
+    if (!selectedCategory) {
+      setMessage("カテゴリを選択してください。");
+      return;
+    }
+
+    if (!content.trim()) {
+      setMessage("本文を入力してください。");
       return;
     }
 
@@ -41,12 +70,12 @@ export default function SubmitPage() {
 
     const { error } = await supabase.from("submissions").insert([
       {
-        pen_name: penName,
-        email,
-        title,
+        pen_name: penName.trim(),
+        email: email.trim(),
+        title: title.trim(),
         category: selectedCategory,
-        summary,
-        content,
+        summary: summary.trim() || null,
+        content: content.trim(),
         external_url: externalUrl || null,
         allow_read_aloud: allowReadAloud,
         allow_sns_promo: allowSnsPromo,
@@ -85,40 +114,60 @@ export default function SubmitPage() {
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-stone-700">
+                ペンネーム <span className="text-red-500">*</span>
+              </label>
+              <Input
+                className="rounded-2xl"
+                placeholder="ペンネーム"
+                value={penName}
+                onChange={(e) => setPenName(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-stone-700">
+                メールアドレス <span className="text-red-500">*</span>
+              </label>
+              <Input
+                className="rounded-2xl"
+                placeholder="メールアドレス"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <label className="text-sm font-medium text-stone-700">
+              作品タイトル <span className="text-red-500">*</span>
+            </label>
             <Input
               className="rounded-2xl"
-              placeholder="ペンネーム"
-              value={penName}
-              onChange={(e) => setPenName(e.target.value)}
-            />
-            <Input
-              className="rounded-2xl"
-              placeholder="メールアドレス"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="作品タイトル"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
             />
           </div>
 
-          <Input
-            className="rounded-2xl"
-            placeholder="作品タイトル"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-
-          <div className="flex flex-wrap gap-2">
-            {categories.filter((c) => c !== "すべて").map((item) => (
-              <Button
-                key={item}
-                type="button"
-                variant={selectedCategory === item ? "default" : "outline"}
-                className="rounded-2xl"
-                onClick={() => setSelectedCategory(item)}
-              >
-                {item}
-              </Button>
-            ))}
+          <div className="grid gap-2">
+            <label className="text-sm font-medium text-stone-700">
+              カテゴリ <span className="text-red-500">*</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {categories.filter((c) => c !== "すべて").map((item) => (
+                <Button
+                  key={item}
+                  type="button"
+                  variant={selectedCategory === item ? "default" : "outline"}
+                  className="rounded-2xl"
+                  onClick={() => setSelectedCategory(item)}
+                >
+                  {item}
+                </Button>
+              ))}
+            </div>
           </div>
 
           <Textarea
@@ -128,12 +177,17 @@ export default function SubmitPage() {
             onChange={(e) => setSummary(e.target.value)}
           />
 
-          <Textarea
-            className="min-h-[260px] rounded-2xl"
-            placeholder="本文"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
+          <div className="grid gap-2">
+            <label className="text-sm font-medium text-stone-700">
+              本文 <span className="text-red-500">*</span>
+            </label>
+            <Textarea
+              className="min-h-[260px] rounded-2xl"
+              placeholder="本文"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+            />
+          </div>
 
           <Input
             className="rounded-2xl"
@@ -172,6 +226,10 @@ export default function SubmitPage() {
               {message}
             </div>
           )}
+
+          <div className="text-xs text-stone-500">
+            <span className="text-red-500">*</span> は必須項目です。
+          </div>
 
           <div>
             <Button

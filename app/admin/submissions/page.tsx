@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import RebornShell from "@/components/reborn/shell";
@@ -25,7 +26,11 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default async function AdminSubmissionsPage() {
+export default async function AdminSubmissionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
   async function markAsPending(formData: FormData) {
     "use server";
 
@@ -96,6 +101,9 @@ export default async function AdminSubmissionsPage() {
     revalidatePath("/works");
   }
 
+  const resolvedSearchParams = await searchParams;
+  const statusFilter = resolvedSearchParams?.status ?? "all";
+
   const { data, error } = await supabase
     .from("submissions")
     .select("*")
@@ -107,6 +115,11 @@ export default async function AdminSubmissionsPage() {
   const pendingCount = submissions.filter((item) => item.status === "pending").length;
   const publishedCount = submissions.filter((item) => item.status === "published").length;
   const rejectedCount = submissions.filter((item) => item.status === "rejected").length;
+
+  const filteredSubmissions = submissions.filter((item) => {
+    if (statusFilter === "all") return true;
+    return (item.status ?? "submitted") === statusFilter;
+  });
 
   return (
     <RebornShell>
@@ -135,19 +148,50 @@ export default async function AdminSubmissionsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: "すべて", value: "all" },
+                { label: "未確認", value: "submitted" },
+                { label: "保留", value: "pending" },
+                { label: "公開済み", value: "published" },
+                { label: "却下", value: "rejected" },
+              ].map((filter) => {
+                const isActive = statusFilter === filter.value;
+
+                return (
+                  <Button
+                    key={filter.value}
+                    asChild
+                    variant={isActive ? "default" : "outline"}
+                    className="rounded-2xl"
+                  >
+                    <Link
+                      href={
+                        filter.value === "all"
+                          ? "/admin/submissions"
+                          : `/admin/submissions?status=${filter.value}`
+                      }
+                    >
+                      {filter.label}
+                    </Link>
+                  </Button>
+                );
+              })}
+            </div>
+
             {error && (
               <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                 読み込みに失敗しました: {error.message}
               </div>
             )}
 
-            {!error && submissions.length === 0 && (
+            {!error && filteredSubmissions.length === 0 && (
               <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
-                まだ投稿はありません。
+                この条件に当てはまる投稿はありません。
               </div>
             )}
 
-            {submissions.map((item) => (
+            {filteredSubmissions.map((item) => (
               <div key={item.id} className="rounded-2xl border border-stone-200 p-4">
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
                   <div>
