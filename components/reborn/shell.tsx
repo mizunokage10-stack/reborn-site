@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Library, BookOpen, Mail, PenSquare, ShieldCheck, FileText, PanelLeft, CheckCircle2, LogOut } from "lucide-react";
+import { Library, BookOpen, Mail, PenSquare, ShieldCheck, PanelLeft, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function NavButton({
@@ -61,7 +61,16 @@ export default function RebornShell({ children }: { children: React.ReactNode })
             <NavButton href="/contact" icon={Mail}>Contact</NavButton>
             <NavButton href="/terms" icon={ShieldCheck}>Terms</NavButton>
             <NavButton href="/privacy" icon={ShieldCheck}>Privacy</NavButton>
-            <NavButton href="/admin/submissions" icon={CheckCircle2}>管理画面</NavButton>
+
+            {isAdminPage && (
+              <>
+                <div className="my-2 border-t border-stone-200" />
+                <div className="px-3 pt-1 text-xs font-medium uppercase tracking-wide text-stone-400">
+                  Admin
+                </div>
+                <NavButton href="/admin/submissions" icon={Library}>投稿管理</NavButton>
+              </>
+            )}
 
             {isAdminPage && (
               <Button
