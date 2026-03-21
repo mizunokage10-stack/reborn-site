@@ -60,6 +60,23 @@ export default async function AdminSubmissionsPage() {
     revalidatePath("/admin/submissions");
   }
 
+  async function markAsRejected(formData: FormData) {
+    "use server";
+
+    const id = Number(formData.get("id"));
+
+    const { error } = await supabase
+      .from("submissions")
+      .update({ status: "rejected" })
+      .eq("id", id);
+
+    if (error) {
+      throw new Error(`却下への更新に失敗しました: ${error.message}`);
+    }
+
+    revalidatePath("/admin/submissions");
+  }
+
   const { data, error } = await supabase
     .from("submissions")
     .select("*")
@@ -70,15 +87,17 @@ export default async function AdminSubmissionsPage() {
   const unreviewedCount = submissions.filter((item) => item.status === "submitted").length;
   const pendingCount = submissions.filter((item) => item.status === "pending").length;
   const publishedCount = submissions.filter((item) => item.status === "published").length;
+  const rejectedCount = submissions.filter((item) => item.status === "rejected").length;
 
   return (
     <RebornShell>
       <div className="grid gap-4">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {[
             { label: "未確認", value: String(unreviewedCount) },
             { label: "保留", value: String(pendingCount) },
             { label: "公開済み", value: String(publishedCount) },
+            { label: "却下", value: String(rejectedCount) },
           ].map((item) => (
             <Card key={item.label} className="rounded-3xl border-stone-200 shadow-sm">
               <CardContent className="p-6">
@@ -158,6 +177,12 @@ export default async function AdminSubmissionsPage() {
                     <input type="hidden" name="id" value={item.id} />
                     <Button type="submit" className="rounded-2xl">
                       公開
+                    </Button>
+                  </form>
+                  <form action={markAsRejected}>
+                    <input type="hidden" name="id" value={item.id} />
+                    <Button type="submit" variant="outline" className="rounded-2xl">
+                      却下
                     </Button>
                   </form>
                 </div>
