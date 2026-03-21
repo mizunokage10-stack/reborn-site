@@ -77,6 +77,25 @@ export default async function AdminSubmissionsPage() {
     revalidatePath("/admin/submissions");
   }
 
+  async function deleteSubmission(formData: FormData) {
+    "use server";
+
+    const id = Number(formData.get("id"));
+
+    const { error } = await supabase
+      .from("submissions")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      throw new Error(`削除に失敗しました: ${error.message}`);
+    }
+
+    revalidatePath("/admin/submissions");
+    revalidatePath("/");
+    revalidatePath("/works");
+  }
+
   const { data, error } = await supabase
     .from("submissions")
     .select("*")
@@ -183,6 +202,12 @@ export default async function AdminSubmissionsPage() {
                     <input type="hidden" name="id" value={item.id} />
                     <Button type="submit" variant="outline" className="rounded-2xl">
                       却下
+                    </Button>
+                  </form>
+                  <form action={deleteSubmission}>
+                    <input type="hidden" name="id" value={item.id} />
+                    <Button type="submit" variant="outline" className="rounded-2xl">
+                      削除
                     </Button>
                   </form>
                 </div>
