@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Library, BookOpen, Mail, PenSquare, ShieldCheck, FileText, PanelLeft, CheckCircle2 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Library, BookOpen, Mail, PenSquare, ShieldCheck, FileText, PanelLeft, CheckCircle2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function NavButton({
@@ -24,6 +25,20 @@ function NavButton({
 }
 
 export default function RebornShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const isAdminPage = pathname.startsWith("/admin");
+
+  async function handleLogout() {
+    await fetch("/api/admin/logout", {
+      method: "POST",
+    });
+
+    router.push("/admin/login");
+    router.refresh();
+  }
+
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 p-4 md:grid-cols-[240px_1fr]">
@@ -41,13 +56,24 @@ export default function RebornShell({ children }: { children: React.ReactNode })
           <div className="grid gap-2">
             <NavButton href="/" icon={Library}>トップ</NavButton>
             <NavButton href="/works" icon={BookOpen}>作品一覧</NavButton>
-            <NavButton href="/works/umi-no-soko" icon={FileText}>作品詳細</NavButton>
             <NavButton href="/submit" icon={PenSquare}>投稿フォーム</NavButton>
             <NavButton href="/about" icon={PanelLeft}>About</NavButton>
             <NavButton href="/contact" icon={Mail}>Contact</NavButton>
             <NavButton href="/terms" icon={ShieldCheck}>Terms</NavButton>
             <NavButton href="/privacy" icon={ShieldCheck}>Privacy</NavButton>
             <NavButton href="/admin/submissions" icon={CheckCircle2}>管理画面</NavButton>
+
+            {isAdminPage && (
+              <Button
+                type="button"
+                variant="outline"
+                className="justify-start rounded-2xl"
+                onClick={() => void handleLogout()}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                ログアウト
+              </Button>
+            )}
           </div>
         </aside>
 
