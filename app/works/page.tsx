@@ -133,7 +133,7 @@ function spineWidthClass(style: string | null) {
   return "w-16 md:w-20";
 }
 
-function groupByCategory(works: PublishedWork[]) {
+function groupByCategory(works: ShelfItem[]) {
   const visibleCategories = shelfCategories.filter((item) => item !== "すべて");
 
   return visibleCategories
@@ -145,7 +145,7 @@ function groupByCategory(works: PublishedWork[]) {
 }
 
 
-function groupNovelsByTypeAndShelf(works: PublishedWork[]) {
+function groupNovelsByTypeAndShelf(works: ShelfItem[]) {
   const typeOrder = ["pure", "popular"];
 
   return typeOrder
