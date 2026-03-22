@@ -140,6 +140,7 @@ function groupByCategory(works: PublishedWork[]) {
     .filter((group) => group.items.length > 0);
 }
 
+
 function groupNovelsByTypeAndShelf(works: PublishedWork[]) {
   const typeOrder = ["pure", "popular"];
 
@@ -163,6 +164,35 @@ function groupNovelsByTypeAndShelf(works: PublishedWork[]) {
       };
     })
     .filter((group) => group.items.length > 0);
+}
+
+function BookshelfSkeleton({ title = "書架を整えています" }: { title?: string }) {
+  return (
+    <section className="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm">
+      <div className="mb-4 flex items-end justify-between gap-3">
+        <div className="space-y-2">
+          <div className="h-7 w-40 rounded bg-stone-200/80" />
+          <div className="h-4 w-52 rounded bg-stone-100" />
+        </div>
+        <div className="h-4 w-12 rounded bg-stone-100" />
+      </div>
+
+      <div className="rounded-[2rem] border border-stone-200 bg-stone-100 p-4">
+        <div className="mb-3 text-sm text-stone-500">{title}</div>
+        <div className="flex gap-3 overflow-hidden pb-3">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div
+              key={index}
+              className={`h-72 shrink-0 rounded-t-xl rounded-b-md bg-stone-300/70 md:h-80 ${
+                index % 3 === 0 ? "w-20 md:w-24" : index % 2 === 0 ? "w-[4.5rem] md:w-[5.5rem]" : "w-16 md:w-20"
+              }`}
+            />
+          ))}
+        </div>
+        <div className="mt-2 h-3 rounded-full bg-stone-300/80 shadow-inner" />
+      </div>
+    </section>
+  );
 }
 
 export default function WorksPage() {
@@ -230,72 +260,89 @@ export default function WorksPage() {
 
   return (
     <RebornShell>
-      <div className="grid gap-4">
+      <div className="grid gap-6">
         <Card className="rounded-3xl border-stone-200 shadow-sm">
-          <CardHeader>
-            <CardTitle>書架</CardTitle>
-            <CardDescription>
-              寄せられた作品を、棚ごとにたどるための図書室です。背表紙を選ぶと、その本の詳細へ進めます。
-            </CardDescription>
+          <CardHeader className="space-y-3">
+            <div className="space-y-2">
+              <CardTitle>書架</CardTitle>
+              <CardDescription className="max-w-2xl leading-7 text-stone-600">
+                寄せられた作品を、棚ごとにたどるための図書室です。背表紙を選ぶと、その本の詳細へ進めます。
+              </CardDescription>
+            </div>
           </CardHeader>
-          <CardContent className="grid gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-3.5 h-4 w-4 text-stone-400" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="rounded-2xl pl-9"
-                placeholder="タイトル・作者・概要・本文を検索"
-              />
+          <CardContent className="grid gap-5">
+            <div className="grid gap-2">
+              <div className="text-sm font-medium text-stone-700">作品を探す</div>
+              <div className="relative max-w-2xl">
+                <Search className="absolute left-3 top-3.5 h-4 w-4 text-stone-400" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="rounded-2xl border-stone-200 bg-stone-50 pl-9"
+                  placeholder="タイトル・作者・概要・本文を検索"
+                />
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {categories.map((item) => (
-                <Button
-                  key={item}
-                  type="button"
-                  variant={category === item ? "default" : "outline"}
-                  className="rounded-2xl"
-                  onClick={() => setCategory(item)}
-                >
-                  {item}
-                </Button>
-              ))}
+            <div className="grid gap-2">
+              <div className="text-sm font-medium text-stone-700">棚の種類を選ぶ</div>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((item) => (
+                  <Button
+                    key={item}
+                    type="button"
+                    variant={category === item ? "default" : "outline"}
+                    className="rounded-2xl"
+                    onClick={() => setCategory(item)}
+                  >
+                    {item}
+                  </Button>
+                ))}
+              </div>
             </div>
 
             {category === "小説" && (
-              <div className="grid gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-4">
-                <div className="grid gap-2">
-                  <div className="text-sm font-medium text-stone-700">まず棚を選ぶ</div>
-                  <div className="flex flex-wrap gap-2">
-                    {literaryTypes.map((item) => (
-                      <Button
-                        key={item.value}
-                        type="button"
-                        variant={literaryType === item.value ? "default" : "outline"}
-                        className="rounded-2xl"
-                        onClick={() => setLiteraryType(item.value)}
-                      >
-                        {item.label}
-                      </Button>
-                    ))}
-                  </div>
+              <div className="grid gap-4 rounded-3xl border border-stone-200 bg-stone-50 p-5">
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-stone-700">小説の棚をたどる</div>
+                  <p className="text-sm leading-7 text-stone-500">
+                    まず純文学か大衆文学を選び、そのあと棚の類いを絞ることができます。
+                  </p>
                 </div>
 
-                <div className="grid gap-2">
-                  <div className="text-sm font-medium text-stone-700">その棚の中で類いを選ぶ</div>
-                  <div className="flex flex-wrap gap-2">
-                    {shelfTags.map((item) => (
-                      <Button
-                        key={item.value}
-                        type="button"
-                        variant={shelfTag === item.value ? "default" : "outline"}
-                        className="rounded-2xl"
-                        onClick={() => setShelfTag(item.value)}
-                      >
-                        {item.label}
-                      </Button>
-                    ))}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-2">
+                    <div className="text-sm font-medium text-stone-700">1. 棚を選ぶ</div>
+                    <div className="flex flex-wrap gap-2">
+                      {literaryTypes.map((item) => (
+                        <Button
+                          key={item.value}
+                          type="button"
+                          variant={literaryType === item.value ? "default" : "outline"}
+                          className="rounded-2xl"
+                          onClick={() => setLiteraryType(item.value)}
+                        >
+                          {item.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <div className="text-sm font-medium text-stone-700">2. 類いを選ぶ</div>
+                    <div className="flex flex-wrap gap-2">
+                      {shelfTags.map((item) => (
+                        <Button
+                          key={item.value}
+                          type="button"
+                          variant={shelfTag === item.value ? "default" : "outline"}
+                          className="rounded-2xl"
+                          onClick={() => setShelfTag(item.value)}
+                        >
+                          {item.label}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -310,15 +357,31 @@ export default function WorksPage() {
         )}
 
         {loading && (
-          <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
-            書架を読み込み中です...
+          <div className="grid gap-6">
+            <BookshelfSkeleton />
+            <BookshelfSkeleton title="作品を並べています" />
           </div>
         )}
 
         {!loading && !errorMessage && filtered.length === 0 && (
-          <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
-            条件に合う公開作品はまだありません。
-          </div>
+          <Card className="rounded-3xl border-stone-200 shadow-sm">
+            <CardContent className="p-8 md:p-10">
+              <div className="mx-auto max-w-2xl space-y-4 text-center">
+                <h2 className="text-2xl font-semibold text-stone-900">まだ作品がありません</h2>
+                <p className="leading-8 text-stone-600">
+                  この条件に当てはまる作品はまだ書架に並んでいません。最初の一作を寄せてみませんか。
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <Button asChild className="rounded-2xl">
+                    <Link href="/submit">作品を寄せる</Link>
+                  </Button>
+                  <Button asChild variant="outline" className="rounded-2xl">
+                    <Link href="/works">条件をリセットする</Link>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {category === "小説" ? (
