@@ -75,7 +75,7 @@ function paginateContent(content: string) {
     const chunkLength = chunk.length;
     const nextLength = pageLength + chunkLength;
 
-    if (pageBuffer.length > 0 && nextLength > 320) {
+    if (pageBuffer.length > 0 && nextLength > 385) {
       pages.push(pageBuffer.join("\n\n"));
       pageBuffer = [chunk];
       pageLength = chunkLength;
@@ -160,14 +160,14 @@ export default async function WorkReadPage({
 
   return (
     <RebornShell>
-      <div className="grid gap-4">
+      <div className="mx-auto grid w-full max-w-5xl gap-4 px-4 py-2 md:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold text-stone-900 md:text-3xl">{work.title}</h1>
             <div className="mt-1 text-sm text-stone-500">{work.pen_name}</div>
           </div>
           <Button asChild variant="outline" className="rounded-2xl">
-            <Link href={`/works/${slug}`}>表紙へ戻る</Link>
+            <Link href={`/works/${slug}`}>本を閉じる</Link>
           </Button>
         </div>
 
@@ -184,7 +184,7 @@ export default async function WorkReadPage({
                 style={{
                   fontFamily: '"MS Mincho", "MS 明朝", "Hiragino Mincho ProN", "Yu Mincho", "Times New Roman", serif',
                   fontSize: "10.5pt",
-                  lineHeight: "2.2",
+                  lineHeight: "2.25",
                   letterSpacing: "0.01em",
                 }}
               >
