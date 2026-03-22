@@ -15,15 +15,6 @@ type PublishedWork = {
   status: string | null;
 };
 
-type ReadingRecord = {
-  id: number;
-  display_name: string | null;
-  is_anonymous: boolean | null;
-  is_public: boolean | null;
-  body: string;
-  created_at: string;
-};
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -131,15 +122,6 @@ export default async function RecordPage({
     );
   }
 
-  const { data: recordsData } = await supabase
-    .from("reading_records")
-    .select("id, display_name, is_anonymous, is_public, body, created_at")
-    .eq("submission_id", id)
-    .eq("is_public", true)
-    .order("created_at", { ascending: false });
-
-  const records: ReadingRecord[] = recordsData ?? [];
-
   return (
     <main
       className="min-h-screen bg-[#faf9f7] px-4 py-6 text-stone-900 md:px-6 md:py-8"
@@ -173,7 +155,7 @@ export default async function RecordPage({
                   </p>
                 </div>
                 <p className="leading-8 text-stone-600">
-                  ここでは、読み終えたあとに残したい感想や記録を、この本のそばに一冊として綴っていけます。
+                  ここでは、読み終えたあとに残したい感想や記録を、この本に対応する記録本へ綴っていきます。
                   匿名で残すことも、他の読者にも公開することも選べます。
                 </p>
               </div>
@@ -241,41 +223,9 @@ export default async function RecordPage({
                   </Button>
                 </div>
               </form>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-3xl border-stone-200 shadow-sm">
-          <CardContent className="p-8 md:p-10">
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-semibold text-stone-900">この本の記録</h2>
-                <p className="leading-8 text-stone-600">
-                  公開されている記録は、この本を読んだ人たちが残したもう一冊の本として、ここに静かに積み重なっていきます。
-                </p>
-              </div>
-
-              {records.length === 0 ? (
-                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-5 text-sm leading-7 text-stone-600">
-                  まだ公開されている記録はありません。最初の一冊を残してみませんか。
-                </div>
-              ) : (
-                <div className="grid gap-4">
-                  {records.map((record) => (
-                    <div key={record.id} className="rounded-3xl border border-stone-200 bg-white p-5">
-                      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                        <div className="text-base font-semibold text-stone-900">
-                          {record.is_anonymous ? "匿名" : record.display_name || "無名"}
-                        </div>
-                        <div className="text-sm text-stone-500">
-                          {new Date(record.created_at).toLocaleDateString("ja-JP")}
-                        </div>
-                      </div>
-                      <p className="whitespace-pre-wrap leading-8 text-stone-700">{record.body}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <p className="text-sm leading-7 text-stone-500">
+                公開された記録は、このページの下に並ぶのではなく、書架の中に置かれる「記録の本」として読める形にしていきます。
+              </p>
             </div>
           </CardContent>
         </Card>
