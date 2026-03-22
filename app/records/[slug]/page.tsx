@@ -1,5 +1,3 @@
-
-
 import { createClient } from "@supabase/supabase-js";
 import RebornShell from "@/components/reborn/shell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -182,7 +180,7 @@ export default async function RecordBookPage({
                     <div className="space-y-2">
                       <h2 className="text-2xl font-semibold text-stone-900">記録本について</h2>
                       <p className="leading-8 text-stone-600">
-                        ここに綴られているのは、読者たちがこの作品を読んだあとに残した公開記録です。感想や立ち止まった箇所、誰かと話したくなった気持ちなどが、一冊の本として静かにまとめられています。
+                        ここに綴られているのは、読者たちがこの作品を読んだあとに残した公開記録です。感想や立ち止まった箇所、誰かと話したくなった気持ちなどが、一冊の本として静かにまとめられています。本文は、他の作品と同じように読書ページで読める形にしていきます。
                       </p>
                     </div>
 
@@ -197,24 +195,21 @@ export default async function RecordBookPage({
                   </div>
 
                   <div className="space-y-5">
-                    <div className="border-b border-stone-200 pb-3">
-                      <h3 className="text-xl font-semibold text-stone-900">綴られた記録</h3>
-                    </div>
-
-                    <div className="grid gap-4">
-                      {records.map((record) => (
-                        <div key={record.id} className="rounded-3xl border border-stone-200 bg-stone-50 p-5">
-                          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                            <div className="text-base font-semibold text-stone-900">
-                              {record.is_anonymous ? "匿名" : record.display_name || "無名"}
-                            </div>
-                            <div className="text-sm text-stone-500">
-                              {new Date(record.created_at).toLocaleDateString("ja-JP")}
-                            </div>
-                          </div>
-                          <p className="whitespace-pre-wrap leading-8 text-stone-700">{record.body}</p>
+                    <div className="rounded-3xl border border-stone-200 bg-stone-50 p-5">
+                      <div className="space-y-3">
+                        <h3 className="text-xl font-semibold text-stone-900">この本を読む</h3>
+                        <p className="leading-8 text-stone-600">
+                          この記録本には、{records.length}篇の公開記録が綴られています。ここでは本についての説明だけを置き、実際の記録本文は読書ページで他の作品と同じように読める形にしていきます。
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                          <Button asChild className="rounded-2xl">
+                            <Link href={`/records/${slug}/read`}>本を読む</Link>
+                          </Button>
+                          <Button asChild variant="outline" className="rounded-2xl">
+                            <Link href={`/works/${slug}/record`}>この本に記録を残す</Link>
+                          </Button>
                         </div>
-                      ))}
+                      </div>
                     </div>
                   </div>
                 </div>
