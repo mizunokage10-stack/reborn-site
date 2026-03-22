@@ -12,6 +12,10 @@ type Submission = {
   email: string;
   title: string;
   category: string;
+  literary_type: string | null;
+  shelf_tag: string | null;
+  cover_color: string | null;
+  cover_style: string | null;
   summary: string | null;
   content: string;
   external_url: string | null;
@@ -197,8 +201,7 @@ export default async function AdminSubmissionsPage({
                   <div>
                     <div className="font-medium">{item.title}</div>
                     <div className="text-sm text-stone-500">
-                      {item.pen_name} ・ {item.category} ・{" "}
-                      {new Date(item.created_at).toLocaleString("ja-JP")}
+                      {item.pen_name} ・ {item.category} ・ {new Date(item.created_at).toLocaleString("ja-JP")}
                     </div>
                   </div>
                   <Badge className="rounded-full">{item.status ?? "submitted"}</Badge>
@@ -214,11 +217,44 @@ export default async function AdminSubmissionsPage({
                     : item.content}
                 </div>
 
-                <div className="mb-3 space-y-1 text-sm text-stone-600">
+                <div className="mb-3 grid gap-2 text-sm text-stone-600 md:grid-cols-2">
                   <div>メール: {item.email}</div>
+                  <div>文学タイプ: {item.literary_type === "popular" ? "大衆文学" : "純文学"}</div>
+                  <div>
+                    棚タグ: {
+                      item.shelf_tag === "mystery" ? "推理" :
+                      item.shelf_tag === "romance" ? "恋愛" :
+                      item.shelf_tag === "dream" ? "夢" :
+                      item.shelf_tag === "strange" ? "怪異" :
+                      item.shelf_tag === "family" ? "家族" :
+                      item.shelf_tag === "city" ? "都市" :
+                      item.shelf_tag === "experimental" ? "実験" :
+                      "その他"
+                    }
+                  </div>
+                  <div>
+                    背表紙の色: {
+                      item.cover_color === "ink" ? "墨" :
+                      item.cover_color === "navy" ? "紺碧" :
+                      item.cover_color === "emerald" ? "深緑" :
+                      item.cover_color === "burgundy" ? "臙脂" :
+                      item.cover_color === "amber" ? "朽葉" :
+                      item.cover_color === "violet" ? "紫紺" :
+                      "灰青"
+                    }
+                  </div>
+                  <div>
+                    装丁スタイル: {
+                      item.cover_style === "minimal" ? "静かな装丁" :
+                      item.cover_style === "classic" ? "古典的な装丁" :
+                      item.cover_style === "soft" ? "柔らかな装丁" :
+                      item.cover_style === "heavy" ? "重たい装丁" :
+                      "鋭い装丁"
+                    }
+                  </div>
                   <div>朗読許可: {item.allow_read_aloud ? "可" : "不可"}</div>
                   <div>SNS紹介許可: {item.allow_sns_promo ? "可" : "不可"}</div>
-                  {item.external_url && <div>外部リンク: {item.external_url}</div>}
+                  {item.external_url && <div className="md:col-span-2">外部リンク: {item.external_url}</div>}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
