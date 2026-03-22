@@ -42,7 +42,8 @@ function coverColorGradient(color: string | null) {
 function coverDecorationClass(style: string | null) {
   const styles: Record<string, string> = {
     minimal: "",
-    classic: "before:absolute before:inset-y-0 before:left-6 before:w-px before:bg-white/25 after:absolute after:inset-y-0 after:right-6 after:w-px after:bg-black/25",
+    classic:
+      "before:absolute before:inset-y-0 before:left-6 before:w-px before:bg-white/25 after:absolute after:inset-y-0 after:right-6 after:w-px after:bg-black/25",
     soft: "shadow-[0_18px_40px_rgba(0,0,0,0.18)]",
     heavy: "shadow-[0_22px_48px_rgba(0,0,0,0.34)] ring-1 ring-inset ring-black/10",
     sharp: "ring-1 ring-inset ring-white/15",
@@ -71,15 +72,34 @@ function shelfTagLabel(value: string | null) {
   return labels[value ?? "other"] ?? "その他";
 }
 
+function extractIdFromSlug(slug?: string) {
+  if (!slug) return null;
+  const match = slug.match(/-(\d+)$/);
+  return match ? Number(match[1]) : null;
+}
+
+function categoryLabel(category: string) {
+  const labels: Record<string, string> = {
+    小説: "物語の棚",
+    日記: "日々の棚",
+    文芸批評: "批評の棚",
+    俳句: "短詩の棚",
+    絵: "図像の棚",
+  };
+
+  return labels[category] ?? "寄せられた棚";
+}
+
 export default async function WorkDetailPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const resolvedParams = await params;
-  const id = extractIdFromSlug(resolvedParams?.slug);
+  const slug = resolvedParams?.slug;
+  const id = extractIdFromSlug(slug);
 
-  if (!id) {
+  if (!id || !slug) {
     return (
       <RebornShell>
         <Card className="rounded-3xl border-stone-200 shadow-sm">
@@ -98,7 +118,9 @@ export default async function WorkDetailPage({
 
   const { data, error } = await supabase
     .from("submissions")
-    .select("id, title, pen_name, category, literary_type, shelf_tag, cover_color, cover_style, summary, content, status, created_at")
+    .select(
+      "id, title, pen_name, category, literary_type, shelf_tag, cover_color, cover_style, summary, content, status, created_at"
+    )
     .eq("id", id)
     .eq("status", "published")
     .single();
@@ -128,7 +150,12 @@ export default async function WorkDetailPage({
         <Card className="overflow-hidden rounded-3xl border-stone-200 shadow-sm">
           <CardContent className="p-0">
             <div className="grid md:grid-cols-[320px_1fr]">
-              <div className={`relative flex min-h-[420px] flex-col justify-between bg-gradient-to-b ${coverColorGradient(work.cover_color)} ${coverDecorationClass(work.cover_style)} p-8 text-stone-100`}>
+              <Link
+                href={`/works/${slug}/read`}
+                className={`relative flex min-h-[420px] flex-col justify-between bg-gradient-to-b ${coverColorGradient(
+                  work.cover_color
+                )} ${coverDecorationClass(work.cover_style)} p-8 text-stone-100 transition hover:brightness-110`}
+              >
                 <div className="absolute inset-0 opacity-20">
                   <div className="absolute left-6 top-0 h-full w-px bg-white/30" />
                   <div className="absolute right-6 top-0 h-full w-px bg-black/30" />
@@ -154,7 +181,7 @@ export default async function WorkDetailPage({
                   <div>{work.pen_name}</div>
                   <div>{new Date(work.created_at).toLocaleDateString("ja-JP")}</div>
                 </div>
-              </div>
+              </Link>
 
               <div className="bg-white p-8 md:p-10">
                 <div className="mx-auto max-w-2xl space-y-8">
@@ -207,26 +234,17 @@ export default async function WorkDetailPage({
                     <div className="space-y-2">
                       <h3 className="text-sm font-medium uppercase tracking-[0.2em] text-stone-400">概要</h3>
                       <p className="leading-8 text-stone-700">
-                        {work.summary || "この作品にはまだ概要が記されていません。本文を開いて、そのまま作品に入ってください。"}
+                        {work.summary || "この作品にはまだ概要が記されていません。表紙を開くか、下のボタンから読み始めてください。"}
                       </p>
                     </div>
 
                     <div className="flex flex-wrap gap-3">
                       <Button asChild className="rounded-2xl">
-                        <a href="#read">本文を読む</a>
+                        <Link href={`/works/${slug}/read`}>本を読む</Link>
                       </Button>
                       <Button asChild variant="outline" className="rounded-2xl">
                         <Link href="/works">書架へ戻る</Link>
                       </Button>
-                    </div>
-                  </div>
-
-                  <div id="read" className="space-y-5">
-                    <div className="border-b border-stone-200 pb-3">
-                      <h3 className="text-xl font-semibold text-stone-900">本文</h3>
-                    </div>
-                    <div className="whitespace-pre-wrap text-[15px] leading-8 text-stone-800 md:text-base">
-                      {work.content}
                     </div>
                   </div>
                 </div>
@@ -237,22 +255,4 @@ export default async function WorkDetailPage({
       </div>
     </RebornShell>
   );
-}
-
-function extractIdFromSlug(slug?: string) {
-  if (!slug) return null;
-  const match = slug.match(/-(\d+)$/);
-  return match ? Number(match[1]) : null;
-}
-
-function categoryLabel(category: string) {
-  const labels: Record<string, string> = {
-    小説: "物語の棚",
-    日記: "日々の棚",
-    文芸批評: "批評の棚",
-    俳句: "短詩の棚",
-    絵: "図像の棚",
-  };
-
-  return labels[category] ?? "寄せられた棚";
 }
