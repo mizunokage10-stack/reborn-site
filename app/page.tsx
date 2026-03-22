@@ -9,21 +9,25 @@ const pillars = [
     title: "作品を読む",
     body: "静かな画面で、寄せられた作品をゆっくり辿ることができます。",
     icon: BookOpen,
+    href: "/works",
   },
   {
     title: "作品を寄せる",
     body: "誰でも作品を送れます。公開は確認制で、書架の静けさを保ちます。",
     icon: PenSquare,
+    href: "/submit",
   },
   {
     title: "作品について集う",
     body: "将来的に読書会や小さな対話の場を通して、作品をめぐる時間を育てます。",
     icon: Users,
+    href: "/about",
   },
   {
     title: "読みの記録を残す",
     body: "読まれた痕跡や記録もまた、作品のそばに静かに残していきます。",
     icon: NotebookPen,
+    href: "/about",
   },
 ];
 
@@ -33,7 +37,7 @@ export default async function HomePage() {
       <div className="grid gap-6">
         <Card className="rounded-3xl border-stone-200 shadow-sm">
           <CardContent className="p-8 md:p-12">
-            <div className="mx-auto max-w-3xl space-y-6 text-center md:text-left">
+            <div className="mx-auto max-w-3xl space-y-6 text-center">
               <div className="space-y-3">
                 <div className="text-sm tracking-[0.18em] text-stone-500">
                   文学のための静かな書架
@@ -42,10 +46,10 @@ export default async function HomePage() {
                   誰でも寄せられ、誰でも読める。
                 </h1>
               </div>
-              <p className="mx-auto max-w-2xl text-base leading-8 text-stone-600 md:mx-0 md:text-lg">
+              <p className="mx-auto max-w-2xl text-base leading-8 text-stone-600 md:text-lg">
                 Reborn は、作品を読み、寄せ、記録していくための場です。
               </p>
-              <div className="flex flex-col items-center justify-center gap-3 md:items-start md:justify-start">
+              <div className="flex flex-col items-center justify-center gap-3">
                 <Button asChild className="rounded-2xl px-8">
                   <Link href="/works">書架を開く</Link>
                 </Button>
@@ -65,19 +69,21 @@ export default async function HomePage() {
             const Icon = item.icon;
 
             return (
-              <Card key={item.title} className="rounded-3xl border-stone-200 shadow-sm">
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50">
-                      <Icon className="h-5 w-5 text-stone-700" />
+              <Link key={item.title} href={item.href} className="block">
+                <Card className="rounded-3xl border-stone-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50">
+                        <Icon className="h-5 w-5 text-stone-700" />
+                      </div>
+                      <div className="space-y-2">
+                        <h2 className="text-lg font-semibold text-stone-900">{item.title}</h2>
+                        <p className="text-sm leading-7 text-stone-600">{item.body}</p>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <h2 className="text-lg font-semibold text-stone-900">{item.title}</h2>
-                      <p className="text-sm leading-7 text-stone-600">{item.body}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             );
           })}
         </div>
