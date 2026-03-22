@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-import RebornShell from "@/components/reborn/shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -106,18 +105,20 @@ export default async function WorkReadPage({
 
   if (!id || !slug) {
     return (
-      <RebornShell>
-        <Card className="rounded-3xl border-stone-200 shadow-sm">
-          <CardContent className="p-8 md:p-10">
-            <div className="mx-auto max-w-3xl space-y-4">
-              <h1 className="text-2xl font-semibold">作品が見つかりません</h1>
-              <p className="leading-7 text-stone-600">
-                URL が正しくないか、この作品はまだ公開されていません。
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </RebornShell>
+      <main className="min-h-screen bg-stone-50 px-4 py-6 md:px-6 md:py-8">
+        <div className="mx-auto w-full max-w-5xl">
+          <Card className="rounded-3xl border-stone-200 shadow-sm">
+            <CardContent className="p-8 md:p-10">
+              <div className="mx-auto max-w-3xl space-y-4">
+                <h1 className="text-2xl font-semibold">作品が見つかりません</h1>
+                <p className="leading-7 text-stone-600">
+                  URL が正しくないか、この作品はまだ公開されていません。
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     );
   }
 
@@ -134,18 +135,20 @@ export default async function WorkReadPage({
 
   if (error || !work) {
     return (
-      <RebornShell>
-        <Card className="rounded-3xl border-stone-200 shadow-sm">
-          <CardContent className="p-8 md:p-10">
-            <div className="mx-auto max-w-3xl space-y-4">
-              <h1 className="text-2xl font-semibold">作品が見つかりません</h1>
-              <p className="leading-7 text-stone-600">
-                この作品は存在しないか、まだ公開されていません。
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </RebornShell>
+      <main className="min-h-screen bg-stone-50 px-4 py-6 md:px-6 md:py-8">
+        <div className="mx-auto w-full max-w-5xl">
+          <Card className="rounded-3xl border-stone-200 shadow-sm">
+            <CardContent className="p-8 md:p-10">
+              <div className="mx-auto max-w-3xl space-y-4">
+                <h1 className="text-2xl font-semibold">作品が見つかりません</h1>
+                <p className="leading-7 text-stone-600">
+                  この作品は存在しないか、まだ公開されていません。
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     );
   }
 
@@ -159,8 +162,8 @@ export default async function WorkReadPage({
   const nextPage = currentPage < pages.length ? currentPage + 1 : null;
 
   return (
-    <RebornShell>
-      <div className="mx-auto grid w-full max-w-5xl gap-4 px-4 py-2 md:px-6">
+    <main className="min-h-screen bg-stone-50 px-4 py-6 md:px-6 md:py-8">
+      <div className="mx-auto grid w-full max-w-5xl gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold text-stone-900 md:text-3xl">{work.title}</h1>
@@ -222,6 +225,6 @@ export default async function WorkReadPage({
           </CardContent>
         </Card>
       </div>
-    </RebornShell>
+    </main>
   );
 }

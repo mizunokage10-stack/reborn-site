@@ -94,13 +94,13 @@ function shelfTagLabel(value: string | null) {
 
 function coverColorGradient(color: string | null) {
   const gradients: Record<string, string> = {
-    ink: "from-zinc-700 to-zinc-950",
-    navy: "from-blue-800 to-slate-950",
-    emerald: "from-emerald-700 to-emerald-950",
-    burgundy: "from-rose-800 to-stone-950",
-    amber: "from-amber-700 to-stone-950",
-    violet: "from-violet-700 to-violet-950",
-    grayblue: "from-slate-600 to-slate-900",
+    ink: "from-zinc-800 via-zinc-700 to-black",
+    navy: "from-slate-900 via-blue-900 to-slate-800",
+    emerald: "from-emerald-950 via-emerald-800 to-teal-900",
+    burgundy: "from-stone-950 via-rose-900 to-stone-800",
+    amber: "from-stone-900 via-amber-800 to-orange-950",
+    violet: "from-slate-950 via-violet-900 to-purple-950",
+    grayblue: "from-slate-800 via-slate-700 to-slate-900",
   };
 
   return gradients[color ?? "ink"] ?? gradients.ink;
@@ -108,19 +108,24 @@ function coverColorGradient(color: string | null) {
 
 function coverStyleClasses(style: string | null) {
   const styles: Record<string, string> = {
-    minimal: "",
-    classic: "before:absolute before:inset-y-0 before:left-3 before:w-px before:bg-white/25 after:absolute after:inset-y-0 after:right-3 after:w-px after:bg-black/25",
-    soft: "shadow-[0_8px_20px_rgba(0,0,0,0.18)]",
-    heavy: "shadow-[0_12px_28px_rgba(0,0,0,0.32)] border-black/20",
-    sharp: "ring-1 ring-inset ring-white/15",
+    minimal:
+      "before:absolute before:inset-y-0 before:left-[10px] before:w-px before:bg-white/10 after:absolute after:inset-y-0 after:right-[8px] after:w-px after:bg-black/25",
+    classic:
+      "before:absolute before:inset-y-3 before:left-[10px] before:w-px before:bg-white/25 after:absolute after:inset-y-3 after:right-[8px] after:w-px after:bg-black/30 ring-1 ring-inset ring-amber-100/10",
+    soft:
+      "before:absolute before:inset-y-0 before:left-[10px] before:w-px before:bg-white/15 after:absolute after:inset-y-0 after:right-[8px] after:w-px after:bg-black/20 shadow-[0_10px_24px_rgba(0,0,0,0.18)]",
+    heavy:
+      "before:absolute before:inset-y-0 before:left-[10px] before:w-px before:bg-white/18 after:absolute after:inset-y-0 after:right-[8px] after:w-px after:bg-black/30 shadow-[0_14px_30px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-black/15",
+    sharp:
+      "before:absolute before:inset-y-0 before:left-[10px] before:w-px before:bg-white/20 after:absolute after:inset-y-0 after:right-[8px] after:w-px after:bg-black/35 ring-1 ring-inset ring-white/15 shadow-[0_10px_20px_rgba(0,0,0,0.22)]",
   };
 
-  return styles[style ?? "minimal"] ?? "";
+  return styles[style ?? "minimal"] ?? styles.minimal;
 }
 
 function spineWidthClass(style: string | null) {
   if (style === "heavy") return "w-20 md:w-24";
-  if (style === "soft") return "w-18 md:w-22";
+  if (style === "soft") return "w-[4.5rem] md:w-[5.5rem]";
   return "w-16 md:w-20";
 }
 
@@ -344,25 +349,31 @@ export default function WorksPage() {
                           <Link
                             key={work.id}
                             href={`/works/${slugify(work.title, work.id)}`}
-                            className={`group relative flex h-72 ${spineWidthClass(work.cover_style)} shrink-0 flex-col justify-between rounded-t-xl rounded-b-md border border-black/10 bg-gradient-to-b ${coverColorGradient(
+                            className={`group relative flex h-72 ${spineWidthClass(work.cover_style)} shrink-0 flex-col justify-between overflow-hidden rounded-t-xl rounded-b-md border border-black/15 bg-gradient-to-b ${coverColorGradient(
                               work.cover_color
-                            )} ${coverStyleClasses(work.cover_style)} px-2 py-3 text-stone-100 transition hover:-translate-y-1 hover:shadow-xl md:h-80`}
+                            )} ${coverStyleClasses(work.cover_style)} px-3 py-3 text-stone-100 transition hover:-translate-y-1 hover:shadow-xl md:h-80`}
                           >
-                            <div className="relative z-10 flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-stone-200/80 md:text-[11px]">
-                              <span>Reborn</span>
+                            <div className="pointer-events-none absolute inset-y-0 left-0 w-3 bg-white/6" />
+                            <div className="pointer-events-none absolute inset-y-0 right-0 w-2 bg-black/18" />
+                            <div className="pointer-events-none absolute inset-x-3 top-5 h-px bg-white/18" />
+                            <div className="pointer-events-none absolute inset-x-3 bottom-12 h-px bg-white/14" />
+                            <div className="pointer-events-none absolute inset-x-3 bottom-4 h-[3px] rounded-full bg-black/20" />
+
+                            <div className="relative z-10 flex items-center justify-center text-[10px] uppercase tracking-[0.28em] text-stone-200/80 md:text-[11px]">
+                              <span>REBORN</span>
                             </div>
 
-                            <div className="relative z-10 flex-1 py-3">
-                              <div className="writing-mode-vertical-rl mx-auto h-full text-center text-sm font-medium leading-6 tracking-[0.08em] text-stone-50 md:text-base">
-                                {work.title}
+                            <div className="relative z-10 flex-1 py-4">
+                              <div className="mx-auto h-full w-full rounded-full border border-white/10 bg-black/10 px-1 py-3">
+                                <div className="writing-mode-vertical-rl mx-auto h-full text-center text-[15px] font-medium leading-6 tracking-[0.08em] text-stone-50 md:text-[17px]">
+                                  {work.title}
+                                </div>
                               </div>
                             </div>
 
                             <div className="relative z-10 border-t border-white/20 pt-2 text-[10px] leading-4 text-stone-200/85 md:text-xs">
-                              <div className="line-clamp-2">{work.pen_name}</div>
+                              <div className="line-clamp-2 text-center">{work.pen_name}</div>
                             </div>
-
-                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 rounded-b-md bg-black/15 opacity-80" />
                           </Link>
                         ))}
                       </div>
@@ -391,25 +402,31 @@ export default function WorksPage() {
                       <Link
                         key={work.id}
                         href={`/works/${slugify(work.title, work.id)}`}
-                        className={`group relative flex h-72 ${spineWidthClass(work.cover_style)} shrink-0 flex-col justify-between rounded-t-xl rounded-b-md border border-black/10 bg-gradient-to-b ${coverColorGradient(
+                        className={`group relative flex h-72 ${spineWidthClass(work.cover_style)} shrink-0 flex-col justify-between overflow-hidden rounded-t-xl rounded-b-md border border-black/15 bg-gradient-to-b ${coverColorGradient(
                           work.cover_color
-                        )} ${coverStyleClasses(work.cover_style)} px-2 py-3 text-stone-100 transition hover:-translate-y-1 hover:shadow-xl md:h-80`}
+                        )} ${coverStyleClasses(work.cover_style)} px-3 py-3 text-stone-100 transition hover:-translate-y-1 hover:shadow-xl md:h-80`}
                       >
-                        <div className="relative z-10 flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-stone-200/80 md:text-[11px]">
-                          <span>Reborn</span>
+                        <div className="pointer-events-none absolute inset-y-0 left-0 w-3 bg-white/6" />
+                        <div className="pointer-events-none absolute inset-y-0 right-0 w-2 bg-black/18" />
+                        <div className="pointer-events-none absolute inset-x-3 top-5 h-px bg-white/18" />
+                        <div className="pointer-events-none absolute inset-x-3 bottom-12 h-px bg-white/14" />
+                        <div className="pointer-events-none absolute inset-x-3 bottom-4 h-[3px] rounded-full bg-black/20" />
+
+                        <div className="relative z-10 flex items-center justify-center text-[10px] uppercase tracking-[0.28em] text-stone-200/80 md:text-[11px]">
+                          <span>REBORN</span>
                         </div>
 
-                        <div className="relative z-10 flex-1 py-3">
-                          <div className="writing-mode-vertical-rl mx-auto h-full text-center text-sm font-medium leading-6 tracking-[0.08em] text-stone-50 md:text-base">
-                            {work.title}
+                        <div className="relative z-10 flex-1 py-4">
+                          <div className="mx-auto h-full w-full rounded-full border border-white/10 bg-black/10 px-1 py-3">
+                            <div className="writing-mode-vertical-rl mx-auto h-full text-center text-[15px] font-medium leading-6 tracking-[0.08em] text-stone-50 md:text-[17px]">
+                              {work.title}
+                            </div>
                           </div>
                         </div>
 
                         <div className="relative z-10 border-t border-white/20 pt-2 text-[10px] leading-4 text-stone-200/85 md:text-xs">
-                          <div className="line-clamp-2">{work.pen_name}</div>
+                          <div className="line-clamp-2 text-center">{work.pen_name}</div>
                         </div>
-
-                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 rounded-b-md bg-black/15 opacity-80" />
                       </Link>
                     ))}
                   </div>

@@ -41,15 +41,19 @@ function coverColorGradient(color: string | null) {
 
 function coverDecorationClass(style: string | null) {
   const styles: Record<string, string> = {
-    minimal: "",
+    minimal:
+      "before:absolute before:inset-y-0 before:left-4 before:w-[2px] before:bg-stone-300/55 after:absolute after:inset-y-0 after:right-0 after:w-[6px] after:bg-stone-900/6 border border-stone-300/80 shadow-[0_18px_35px_rgba(0,0,0,0.08)]",
     classic:
-      "before:absolute before:inset-y-0 before:left-6 before:w-px before:bg-white/25 after:absolute after:inset-y-0 after:right-6 after:w-px after:bg-black/25",
-    soft: "shadow-[0_18px_40px_rgba(0,0,0,0.18)]",
-    heavy: "shadow-[0_22px_48px_rgba(0,0,0,0.34)] ring-1 ring-inset ring-black/10",
-    sharp: "ring-1 ring-inset ring-white/15",
+      "before:absolute before:inset-y-0 before:left-4 before:w-[2px] before:bg-stone-400/60 after:absolute after:inset-y-0 after:right-0 after:w-[6px] after:bg-stone-900/7 border border-stone-400/70 ring-1 ring-inset ring-stone-200/80 shadow-[0_20px_38px_rgba(0,0,0,0.1)]",
+    soft:
+      "before:absolute before:inset-y-0 before:left-4 before:w-[2px] before:bg-stone-300/55 after:absolute after:inset-y-0 after:right-0 after:w-[6px] after:bg-stone-900/6 border border-stone-300/70 shadow-[0_16px_30px_rgba(0,0,0,0.07)]",
+    heavy:
+      "before:absolute before:inset-y-0 before:left-4 before:w-[3px] before:bg-stone-400/55 after:absolute after:inset-y-0 after:right-0 after:w-[8px] after:bg-stone-900/10 border border-stone-400/80 shadow-[0_24px_44px_rgba(0,0,0,0.12)]",
+    sharp:
+      "before:absolute before:inset-y-0 before:left-4 before:w-[2px] before:bg-stone-500/60 after:absolute after:inset-y-0 after:right-0 after:w-[6px] after:bg-stone-900/8 border border-stone-500/75 ring-1 ring-inset ring-white/70 shadow-[0_18px_34px_rgba(0,0,0,0.1)]",
   };
 
-  return styles[style ?? "minimal"] ?? "";
+  return styles[style ?? "minimal"] ?? styles.minimal;
 }
 
 function literaryTypeLabel(value: string | null) {
@@ -149,41 +153,57 @@ export default async function WorkDetailPage({
       <div className="grid gap-6">
         <Card className="overflow-hidden rounded-3xl border-stone-200 shadow-sm">
           <CardContent className="p-0">
-            <div className="grid md:grid-cols-[320px_1fr]">
-              <Link
-                href={`/works/${slug}/read`}
-                className={`relative flex min-h-[420px] flex-col justify-between bg-gradient-to-b ${coverColorGradient(
-                  work.cover_color
-                )} ${coverDecorationClass(work.cover_style)} p-8 text-stone-100 transition hover:brightness-110`}
-              >
-                <div className="absolute inset-0 opacity-20">
-                  <div className="absolute left-6 top-0 h-full w-px bg-white/30" />
-                  <div className="absolute right-6 top-0 h-full w-px bg-black/30" />
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.12),transparent_45%)]" />
-                </div>
-
-                <div className="relative z-10 flex items-start justify-between gap-4 text-xs uppercase tracking-[0.25em] text-stone-200/80">
-                  <span>Reborn</span>
-                  <span>{literaryTypeLabel(work.literary_type)}</span>
-                </div>
-
-                <div className="relative z-10 space-y-6 py-10">
-                  <div className="space-y-2 text-xs uppercase tracking-[0.25em] text-stone-200/80">
-                    <div>{work.category}</div>
-                    <div>{shelfTagLabel(work.shelf_tag)}</div>
+            <div className="grid md:grid-cols-[380px_1fr]">
+              <div className="bg-stone-50 p-5 md:p-8">
+                <Link
+                  href={`/works/${slug}/read`}
+                  className={`group relative mx-auto flex min-h-[420px] w-full max-w-[18rem] flex-col justify-between overflow-hidden rounded-r-[0.5rem] bg-gradient-to-br ${coverColorGradient(
+                    work.cover_color
+                  )} ${coverDecorationClass(work.cover_style)} p-8 text-stone-900 transition hover:-translate-y-0.5 hover:brightness-105`}
+                >
+                  <div className="pointer-events-none absolute inset-0">
+                    <div className="absolute inset-y-0 left-0 w-4 bg-stone-900/5" />
+                    <div className="absolute inset-y-0 left-[16px] w-px bg-stone-500/25" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.55),transparent_42%)]" />
+                    <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(to_right,rgba(120,120,120,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(120,120,120,0.03)_1px,transparent_1px)] [background-size:24px_24px]" />
                   </div>
-                  <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
-                    {work.title}
-                  </h1>
-                </div>
 
-                <div className="relative z-10 border-t border-white/20 pt-4 text-sm leading-6 text-stone-200/90">
-                  <div>{work.pen_name}</div>
-                  <div>{new Date(work.created_at).toLocaleDateString("ja-JP")}</div>
-                </div>
-              </Link>
+                  <div className="relative z-10 flex items-start justify-between gap-4 text-[10px] uppercase tracking-[0.3em] text-stone-500">
+                    <span>REBORN</span>
+                    <span>{literaryTypeLabel(work.literary_type)}</span>
+                  </div>
 
-              <div className="bg-white p-8 md:p-10">
+                  <div className="relative z-10 flex-1 py-10">
+                    <div className="mx-auto flex h-full max-w-[15.5rem] flex-col items-center justify-start text-center">
+                      <div className="mb-10 space-y-1 text-[10px] uppercase tracking-[0.3em] text-stone-500">
+                        <div>{work.category}</div>
+                        <div>{shelfTagLabel(work.shelf_tag)}</div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <h1 className="text-[2.4rem] font-semibold leading-[1.32] text-stone-900 md:text-[2.8rem]">
+                          {work.title}
+                        </h1>
+                        <div className="text-sm tracking-[0.18em] text-stone-600">
+                          {work.pen_name}
+                        </div>
+                      </div>
+
+                      <div className="mt-8 w-16 border-t border-stone-400/60" />
+
+                      <div className="mt-4 text-[11px] uppercase tracking-[0.28em] text-stone-500">
+                        Literary Archive
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative z-10 pt-4 text-center text-sm leading-6 text-stone-500">
+                    <div>{new Date(work.created_at).toLocaleDateString("ja-JP")}</div>
+                  </div>
+                </Link>
+              </div>
+
+              <div className="bg-white p-6 md:p-10">
                 <div className="mx-auto max-w-2xl space-y-8">
                   <div className="space-y-4 border-b border-stone-200 pb-6">
                     <div className="flex flex-wrap items-center gap-3">
