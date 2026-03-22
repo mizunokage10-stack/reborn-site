@@ -62,6 +62,7 @@ export default function RebornShell({ children }: { children: React.ReactNode })
               <nav className="flex flex-wrap items-center gap-5">
                 <HeaderLink href="/">トップ</HeaderLink>
                 <HeaderLink href="/works">書架</HeaderLink>
+                <HeaderLink href="/records">記録</HeaderLink>
                 <HeaderLink href="/submit">投稿する</HeaderLink>
               </nav>
             ) : (
