@@ -34,22 +34,26 @@ export default async function HomePage() {
         <Card className="rounded-3xl border-stone-200 shadow-sm">
           <CardContent className="p-8 md:p-12">
             <div className="mx-auto max-w-3xl space-y-6 text-center md:text-left">
-              <h1 className="text-3xl font-semibold leading-tight md:text-5xl">
-                文学のための、静かな書架。
-              </h1>
-              <p className="max-w-2xl text-base leading-8 text-stone-600 md:text-lg">
-                Reborn は、誰でも作品を寄せることができ、誰でも読むことができる場です。
-                ただ速く流れていくのではなく、一つ一つの作品と静かに向き合うための図書館を目指しています。
+              <div className="space-y-3">
+                <div className="text-sm tracking-[0.18em] text-stone-500">
+                  文学のための静かな書架
+                </div>
+                <h1 className="text-3xl font-semibold leading-tight md:text-5xl">
+                  誰でも寄せられ、誰でも読める。
+                </h1>
+              </div>
+              <p className="mx-auto max-w-2xl text-base leading-8 text-stone-600 md:mx-0 md:text-lg">
+                Reborn は、作品を読み、寄せ、記録していくための場です。
               </p>
-              <div className="flex flex-wrap items-center justify-center gap-3 md:justify-start">
-                <Button asChild className="rounded-2xl px-6">
-                  <Link href="/works">作品を読む</Link>
+              <div className="flex flex-col items-center justify-center gap-3 md:items-start md:justify-start">
+                <Button asChild className="rounded-2xl px-8">
+                  <Link href="/works">書架を開く</Link>
                 </Button>
                 <Link
                   href="/submit"
                   className="text-sm font-medium text-stone-600 underline-offset-4 transition hover:text-stone-950 hover:underline"
                 >
-                  投稿する
+                  作品を寄せたい方はこちら
                 </Link>
               </div>
             </div>

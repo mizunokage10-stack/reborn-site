@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Library, BookOpen, Mail, PenSquare, ShieldCheck, PanelLeft, LogOut } from "lucide-react";
+import { Library, PanelLeft, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function HeaderLink({
@@ -38,8 +38,14 @@ export default function RebornShell({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f7] text-stone-900">
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-4 md:px-6">
+    <div
+      className="min-h-screen bg-[#faf9f7] text-stone-900"
+      style={{
+        fontFamily:
+          '"MS Mincho", "MS 明朝", "Hiragino Mincho ProN", "Yu Mincho", "Times New Roman", serif',
+      }}
+    >
+      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-4 md:px-6">
         <header className="mb-6 rounded-3xl border border-stone-200 bg-white px-5 py-4 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
@@ -48,7 +54,7 @@ export default function RebornShell({ children }: { children: React.ReactNode })
               </div>
               <div>
                 <div className="text-lg font-semibold">Reborn</div>
-                <div className="text-sm text-stone-500">文学のための静かな書架</div>
+                <div className="text-sm text-stone-500">文学のための、静かな書架</div>
               </div>
             </div>
 
