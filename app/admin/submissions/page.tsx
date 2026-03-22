@@ -25,6 +25,16 @@ type Submission = {
   created_at: string;
 };
 
+type ReadingRecord = {
+  id: number;
+  submission_id: number;
+  display_name: string | null;
+  is_anonymous: boolean | null;
+  is_public: boolean | null;
+  body: string;
+  created_at: string;
+};
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -105,6 +115,25 @@ export default async function AdminSubmissionsPage({
     revalidatePath("/works");
   }
 
+  async function deleteReadingRecord(formData: FormData) {
+    "use server";
+
+    const id = Number(formData.get("id"));
+
+    const { error } = await supabase
+      .from("reading_records")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      throw new Error(`記録の削除に失敗しました: ${error.message}`);
+    }
+
+    revalidatePath("/admin/submissions");
+    revalidatePath("/works");
+    revalidatePath("/records");
+  }
+
   const resolvedSearchParams = await searchParams;
   const statusFilter = resolvedSearchParams?.status ?? "all";
 
@@ -115,10 +144,19 @@ export default async function AdminSubmissionsPage({
 
   const submissions: Submission[] = data ?? [];
 
+  const { data: recordsData, error: recordsError } = await supabase
+    .from("reading_records")
+    .select("id, submission_id, display_name, is_anonymous, is_public, body, created_at")
+    .order("created_at", { ascending: false });
+
+  const readingRecords: ReadingRecord[] = recordsData ?? [];
+  const submissionMap = new Map(submissions.map((item) => [item.id, item]));
+
   const unreviewedCount = submissions.filter((item) => item.status === "submitted").length;
   const pendingCount = submissions.filter((item) => item.status === "pending").length;
   const publishedCount = submissions.filter((item) => item.status === "published").length;
   const rejectedCount = submissions.filter((item) => item.status === "rejected").length;
+  const readingRecordCount = readingRecords.length;
 
   const filteredSubmissions = submissions.filter((item) => {
     if (statusFilter === "all") return true;
@@ -128,12 +166,13 @@ export default async function AdminSubmissionsPage({
   return (
     <RebornShell>
       <div className="grid gap-4">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {[
             { label: "未確認", value: String(unreviewedCount) },
             { label: "保留", value: String(pendingCount) },
             { label: "公開済み", value: String(publishedCount) },
             { label: "却下", value: String(rejectedCount) },
+            { label: "記録", value: String(readingRecordCount) },
           ].map((item) => (
             <Card key={item.label} className="rounded-3xl border-stone-200 shadow-sm">
               <CardContent className="p-6">
@@ -293,6 +332,72 @@ export default async function AdminSubmissionsPage({
                 </div>
               </div>
             ))}
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-3xl border-stone-200 shadow-sm">
+          <CardHeader>
+            <CardTitle>記録管理</CardTitle>
+            <CardDescription>
+              寄せられた読みの記録を確認し、ふざけた内容や誹謗中傷などを削除できます。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            {recordsError && (
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                記録の読み込みに失敗しました: {recordsError.message}
+              </div>
+            )}
+
+            {!recordsError && readingRecords.length === 0 && (
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
+                まだ寄せられた記録はありません。
+              </div>
+            )}
+
+            {readingRecords.map((record) => {
+              const parent = submissionMap.get(record.submission_id);
+              const displayName = record.is_anonymous ? "匿名" : record.display_name || "無名";
+
+              return (
+                <div key={record.id} className="rounded-2xl border border-stone-200 p-4">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <div className="font-medium">{parent ? `『${parent.title}』への記録` : `作品ID ${record.submission_id} への記録`}</div>
+                      <div className="text-sm text-stone-500">
+                        {displayName} ・ {new Date(record.created_at).toLocaleString("ja-JP")}
+                      </div>
+                    </div>
+                    <Badge className="rounded-full">{record.is_public ? "公開" : "非公開"}</Badge>
+                  </div>
+
+                  <div className="mb-3 grid gap-2 text-sm text-stone-600 md:grid-cols-2">
+                    <div>元作品: {parent ? `${parent.title} / ${parent.pen_name}` : "不明"}</div>
+                    <div>匿名設定: {record.is_anonymous ? "匿名" : "名前表示"}</div>
+                  </div>
+
+                  <div className="mb-3 rounded-2xl bg-stone-50 p-3 text-sm leading-6 text-stone-700">
+                    {record.body.length > 220 ? `${record.body.slice(0, 220)}…` : record.body}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <details className="w-full rounded-2xl border border-stone-200 bg-stone-50 p-3 text-sm text-stone-700">
+                      <summary className="cursor-pointer font-medium">内容確認</summary>
+                      <div className="mt-3 whitespace-pre-wrap leading-7 text-stone-800">
+                        {record.body}
+                      </div>
+                    </details>
+
+                    <form action={deleteReadingRecord}>
+                      <input type="hidden" name="id" value={record.id} />
+                      <Button type="submit" variant="outline" className="rounded-2xl">
+                        削除
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
       </div>
