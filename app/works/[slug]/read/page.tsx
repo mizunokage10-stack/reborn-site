@@ -31,35 +31,65 @@ function extractIdFromSlug(slug?: string) {
 }
 
 function paginateContent(content: string) {
-  const paragraphs = content
+  const normalized = content.replace(/\r\n/g, "\n").trim();
+
+  if (!normalized) return ["本文がありません。"];
+
+  const rawParagraphs = normalized
     .split(/\n\s*\n/)
     .map((item) => item.trim())
     .filter(Boolean);
 
-  if (paragraphs.length === 0) return ["本文がありません。"];
+  const chunks: string[] = [];
 
-  const pages: string[] = [];
-  let buffer: string[] = [];
-  let currentLength = 0;
+  for (const paragraph of rawParagraphs) {
+    if (paragraph.length <= 340) {
+      chunks.push(paragraph);
+      continue;
+    }
 
-  for (const paragraph of paragraphs) {
-    const nextLength = currentLength + paragraph.length;
+    const sentences = paragraph.match(/[^。！？!?]+[。！？!?]?/g) ?? [paragraph];
+    let buffer = "";
 
-    if (buffer.length > 0 && nextLength > 850) {
-      pages.push(buffer.join("\n\n"));
-      buffer = [paragraph];
-      currentLength = paragraph.length;
-    } else {
-      buffer.push(paragraph);
-      currentLength = nextLength;
+    for (const sentence of sentences) {
+      const next = `${buffer}${sentence}`;
+
+      if (buffer && next.length > 340) {
+        chunks.push(buffer.trim());
+        buffer = sentence;
+      } else {
+        buffer = next;
+      }
+    }
+
+    if (buffer.trim()) {
+      chunks.push(buffer.trim());
     }
   }
 
-  if (buffer.length > 0) {
-    pages.push(buffer.join("\n\n"));
+  const pages: string[] = [];
+  let pageBuffer: string[] = [];
+  let pageLength = 0;
+
+  for (const chunk of chunks) {
+    const chunkLength = chunk.length;
+    const nextLength = pageLength + chunkLength;
+
+    if (pageBuffer.length > 0 && nextLength > 520) {
+      pages.push(pageBuffer.join("\n\n"));
+      pageBuffer = [chunk];
+      pageLength = chunkLength;
+    } else {
+      pageBuffer.push(chunk);
+      pageLength = nextLength;
+    }
   }
 
-  return pages;
+  if (pageBuffer.length > 0) {
+    pages.push(pageBuffer.join("\n\n"));
+  }
+
+  return pages.length > 0 ? pages : ["本文がありません。"];
 }
 
 export default async function WorkReadPage({
@@ -141,15 +171,23 @@ export default async function WorkReadPage({
           </Button>
         </div>
 
-        <Card className="rounded-3xl border-stone-200 shadow-sm">
+        <Card className="rounded-[2rem] border-stone-200 shadow-sm">
           <CardContent className="p-6 md:p-10">
-            <div className="mx-auto max-w-3xl space-y-8">
+            <div className="mx-auto max-w-4xl space-y-8">
               <div className="flex items-center justify-between gap-3 border-b border-stone-200 pb-4 text-sm text-stone-500">
                 <span>第 {currentPage} 頁</span>
                 <span>全 {pages.length} 頁</span>
               </div>
 
-              <div className="min-h-[60vh] whitespace-pre-wrap text-[17px] leading-10 text-stone-800 md:text-[18px] md:leading-[2.5]">
+              <div
+                className="min-h-[58vh] whitespace-pre-wrap text-stone-800"
+                style={{
+                  fontFamily: '"MS Mincho", "MS 明朝", "Hiragino Mincho ProN", "Yu Mincho", "Times New Roman", serif',
+                  fontSize: "31px",
+                  lineHeight: "2.05",
+                  letterSpacing: "0.01em",
+                }}
+              >
                 {currentContent}
               </div>
 
