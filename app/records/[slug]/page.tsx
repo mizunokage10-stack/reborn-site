@@ -186,7 +186,10 @@ export default async function RecordBookPage({
 
                     <div className="flex flex-wrap gap-3">
                       <Button asChild className="rounded-2xl">
-                        <Link href={`/works/${slug}/record`}>この本に記録を残す</Link>
+                        <Link href={`/records/${slug}/read`}>本を読む</Link>
+                      </Button>
+                      <Button asChild variant="outline" className="rounded-2xl">
+                        <Link href={`/works/${slug}`}>元の本をひらく</Link>
                       </Button>
                       <Button asChild variant="outline" className="rounded-2xl">
                         <Link href="/records">記録の書架へ戻る</Link>
@@ -204,6 +207,9 @@ export default async function RecordBookPage({
                         <div className="flex flex-wrap gap-3">
                           <Button asChild className="rounded-2xl">
                             <Link href={`/records/${slug}/read`}>本を読む</Link>
+                          </Button>
+                          <Button asChild variant="outline" className="rounded-2xl">
+                            <Link href={`/works/${slug}`}>元の本をひらく</Link>
                           </Button>
                           <Button asChild variant="outline" className="rounded-2xl">
                             <Link href={`/works/${slug}/record`}>この本に記録を残す</Link>

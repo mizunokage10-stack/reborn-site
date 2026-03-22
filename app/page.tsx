@@ -27,7 +27,7 @@ const pillars = [
     title: "読みの記録を残す",
     body: "読まれた痕跡や記録もまた、作品のそばに静かに残していきます。",
     icon: NotebookPen,
-    href: "/about",
+    href: "/works?category=記録",
   },
 ];
 
