@@ -43,7 +43,7 @@ function paginateContent(content: string) {
   const chunks: string[] = [];
 
   for (const paragraph of rawParagraphs) {
-    if (paragraph.length <= 340) {
+    if (paragraph.length <= 220) {
       chunks.push(paragraph);
       continue;
     }
@@ -54,7 +54,7 @@ function paginateContent(content: string) {
     for (const sentence of sentences) {
       const next = `${buffer}${sentence}`;
 
-      if (buffer && next.length > 340) {
+      if (buffer && next.length > 220) {
         chunks.push(buffer.trim());
         buffer = sentence;
       } else {
@@ -75,7 +75,7 @@ function paginateContent(content: string) {
     const chunkLength = chunk.length;
     const nextLength = pageLength + chunkLength;
 
-    if (pageBuffer.length > 0 && nextLength > 520) {
+    if (pageBuffer.length > 0 && nextLength > 320) {
       pages.push(pageBuffer.join("\n\n"));
       pageBuffer = [chunk];
       pageLength = chunkLength;
@@ -183,8 +183,8 @@ export default async function WorkReadPage({
                 className="min-h-[58vh] whitespace-pre-wrap text-stone-800"
                 style={{
                   fontFamily: '"MS Mincho", "MS 明朝", "Hiragino Mincho ProN", "Yu Mincho", "Times New Roman", serif',
-                  fontSize: "31px",
-                  lineHeight: "2.05",
+                  fontSize: "10.5pt",
+                  lineHeight: "2.2",
                   letterSpacing: "0.01em",
                 }}
               >
