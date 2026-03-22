@@ -267,6 +267,43 @@ export default async function WorkDetailPage({
                       </Button>
                     </div>
                   </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-semibold text-stone-900">読み終えたあとに</h3>
+                      <p className="leading-8 text-stone-600">
+                        読み終えたあと、この本についての記録を残したり、他の読者と集いたいという意思を示したりできるようにしていきます。
+                      </p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="rounded-3xl border border-stone-200 bg-stone-50 p-5">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <h4 className="text-lg font-semibold text-stone-900">記録を残す</h4>
+                          <Badge variant="outline" className="rounded-full">利用できます</Badge>
+                        </div>
+                        <p className="mb-4 leading-8 text-stone-600">
+                          この本を読んで感じたことを書き留め、その本のそばに記録として残せるようにします。名前を出すか匿名にするかも選べる予定です。
+                        </p>
+                        <Button asChild type="button" variant="outline" className="rounded-2xl">
+                          <Link href={`/works/${slug}/record`}>記録を残す</Link>
+                        </Button>
+                      </div>
+
+                      <div className="rounded-3xl border border-stone-200 bg-stone-50 p-5">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <h4 className="text-lg font-semibold text-stone-900">この本について集いたい</h4>
+                          <Badge variant="outline" className="rounded-full">利用できます</Badge>
+                        </div>
+                        <p className="mb-4 leading-8 text-stone-600">
+                          この本を他の読者と話したいと思ったら、その意思を示せるようにします。一定数集まったら、運営が読書会や対話の場を案内できる形を考えています。
+                        </p>
+                        <Button asChild type="button" variant="outline" className="rounded-2xl">
+                          <Link href={`/works/${slug}/gather`}>集いたい</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
