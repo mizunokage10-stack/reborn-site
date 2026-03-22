@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import Link from "next/link";
 
-type PublishedWork = {
+type ShelfItem = {
   id: number;
   title: string;
   pen_name: string;
@@ -23,6 +23,7 @@ type PublishedWork = {
   content: string;
   status: string | null;
   created_at: string;
+  href: string;
 };
 
 const supabase = createClient(
@@ -48,6 +49,8 @@ const shelfTags = [
   { value: "other", label: "その他" },
 ];
 
+const shelfCategories = categories.includes("記録") ? categories : [...categories, "記録"];
+
 function slugify(title: string, id: number) {
   const base = title
     .toLowerCase()
@@ -67,6 +70,7 @@ function categoryShelfLabel(category: string) {
     文芸批評: "批評の棚",
     俳句: "短詩の棚",
     絵: "図像の棚",
+    記録: "読後記録の棚",
   };
 
   return labels[category] ?? "寄せられた棚";
@@ -130,7 +134,7 @@ function spineWidthClass(style: string | null) {
 }
 
 function groupByCategory(works: PublishedWork[]) {
-  const visibleCategories = categories.filter((item) => item !== "すべて");
+  const visibleCategories = shelfCategories.filter((item) => item !== "すべて");
 
   return visibleCategories
     .map((category) => ({
@@ -200,7 +204,7 @@ export default function WorksPage() {
   const [category, setCategory] = useState("すべて");
   const [literaryType, setLiteraryType] = useState("all");
   const [shelfTag, setShelfTag] = useState("all");
-  const [works, setWorks] = useState<PublishedWork[]>([]);
+  const [works, setWorks] = useState<ShelfItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -224,7 +228,43 @@ export default function WorksPage() {
         return;
       }
 
-      setWorks(data ?? []);
+      const publishedWorks = (data ?? []).map((work) => ({
+        ...work,
+        href: `/works/${slugify(work.title, work.id)}`,
+      }));
+
+      const { data: recordsData, error: recordsError } = await supabase
+        .from("reading_records")
+        .select("submission_id")
+        .eq("is_public", true);
+
+      if (recordsError) {
+        setErrorMessage(`記録の読み込みに失敗しました: ${recordsError.message}`);
+        setWorks(publishedWorks);
+        setLoading(false);
+        return;
+      }
+
+      const recordCountMap = new Map<number, number>();
+      (recordsData ?? []).forEach((record) => {
+        const submissionId = Number(record.submission_id);
+        recordCountMap.set(submissionId, (recordCountMap.get(submissionId) ?? 0) + 1);
+      });
+
+      const recordBooks = publishedWorks
+        .filter((work) => (recordCountMap.get(work.id) ?? 0) > 0)
+        .map((work) => ({
+          ...work,
+          title: `『${work.title}』の記録`,
+          category: "記録",
+          literary_type: null,
+          shelf_tag: null,
+          summary: `この作品には公開された記録が ${recordCountMap.get(work.id) ?? 0} 篇あります。`,
+          content: `この作品には公開された記録が ${recordCountMap.get(work.id) ?? 0} 篇あります。`,
+          href: `/records/${slugify(work.title, work.id)}`,
+        }));
+
+      setWorks([...publishedWorks, ...recordBooks]);
       setLoading(false);
     }
 
@@ -287,7 +327,7 @@ export default function WorksPage() {
             <div className="grid gap-2">
               <div className="text-sm font-medium text-stone-700">棚の種類を選ぶ</div>
               <div className="flex flex-wrap gap-2">
-                {categories.map((item) => (
+                {shelfCategories.map((item) => (
                   <Button
                     key={item}
                     type="button"
@@ -411,7 +451,7 @@ export default function WorksPage() {
                         {shelfGroup.items.map((work) => (
                           <Link
                             key={work.id}
-                            href={`/works/${slugify(work.title, work.id)}`}
+                            href={work.href}
                             className={`group relative flex h-72 ${spineWidthClass(work.cover_style)} shrink-0 flex-col justify-between overflow-hidden rounded-t-xl rounded-b-md border border-black/15 bg-gradient-to-b ${coverColorGradient(
                               work.cover_color
                             )} ${coverStyleClasses(work.cover_style)} px-3 py-3 text-stone-100 transition hover:-translate-y-1 hover:shadow-xl md:h-80`}
@@ -464,7 +504,7 @@ export default function WorksPage() {
                     {group.items.map((work) => (
                       <Link
                         key={work.id}
-                        href={`/works/${slugify(work.title, work.id)}`}
+                        href={work.href}
                         className={`group relative flex h-72 ${spineWidthClass(work.cover_style)} shrink-0 flex-col justify-between overflow-hidden rounded-t-xl rounded-b-md border border-black/15 bg-gradient-to-b ${coverColorGradient(
                           work.cover_color
                         )} ${coverStyleClasses(work.cover_style)} px-3 py-3 text-stone-100 transition hover:-translate-y-1 hover:shadow-xl md:h-80`}
