@@ -10,6 +10,40 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
+const literaryTypes = [
+  { value: "popular", label: "大衆文学" },
+  { value: "pure", label: "純文学" },
+];
+
+const shelfTags = [
+  { value: "mystery", label: "推理" },
+  { value: "romance", label: "恋愛" },
+  { value: "dream", label: "夢" },
+  { value: "strange", label: "怪異" },
+  { value: "family", label: "家族" },
+  { value: "city", label: "都市" },
+  { value: "experimental", label: "実験" },
+  { value: "other", label: "その他" },
+];
+
+const coverColors = [
+  { value: "ink", label: "墨" },
+  { value: "navy", label: "紺碧" },
+  { value: "emerald", label: "深緑" },
+  { value: "burgundy", label: "臙脂" },
+  { value: "amber", label: "朽葉" },
+  { value: "violet", label: "紫紺" },
+  { value: "grayblue", label: "灰青" },
+];
+
+const coverStyles = [
+  { value: "minimal", label: "静かな装丁" },
+  { value: "classic", label: "古典的な装丁" },
+  { value: "soft", label: "柔らかな装丁" },
+  { value: "heavy", label: "重たい装丁" },
+  { value: "sharp", label: "鋭い装丁" },
+];
+
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -19,6 +53,10 @@ export default function SubmitPage() {
   const [email, setEmail] = useState("");
   const [title, setTitle] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedLiteraryType, setSelectedLiteraryType] = useState("pure");
+  const [selectedShelfTag, setSelectedShelfTag] = useState("other");
+  const [selectedCoverColor, setSelectedCoverColor] = useState("ink");
+  const [selectedCoverStyle, setSelectedCoverStyle] = useState("minimal");
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("");
   const [externalUrl, setExternalUrl] = useState("");
@@ -56,6 +94,16 @@ export default function SubmitPage() {
       return;
     }
 
+    if (!selectedLiteraryType) {
+      setMessage("文学タイプを選択してください。");
+      return;
+    }
+
+    if (!selectedShelfTag) {
+      setMessage("棚タグを選択してください。");
+      return;
+    }
+
     if (!content.trim()) {
       setMessage("本文を入力してください。");
       return;
@@ -74,6 +122,10 @@ export default function SubmitPage() {
         email: email.trim(),
         title: title.trim(),
         category: selectedCategory,
+        literary_type: selectedLiteraryType,
+        shelf_tag: selectedShelfTag,
+        cover_color: selectedCoverColor,
+        cover_style: selectedCoverStyle,
         summary: summary.trim() || null,
         content: content.trim(),
         external_url: externalUrl || null,
@@ -95,6 +147,10 @@ export default function SubmitPage() {
     setEmail("");
     setTitle("");
     setSelectedCategory("");
+    setSelectedLiteraryType("pure");
+    setSelectedShelfTag("other");
+    setSelectedCoverColor("ink");
+    setSelectedCoverStyle("minimal");
     setSummary("");
     setContent("");
     setExternalUrl("");
@@ -165,6 +221,82 @@ export default function SubmitPage() {
                   onClick={() => setSelectedCategory(item)}
                 >
                   {item}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <label className="text-sm font-medium text-stone-700">
+              文学タイプ <span className="text-red-500">*</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {literaryTypes.map((item) => (
+                <Button
+                  key={item.value}
+                  type="button"
+                  variant={selectedLiteraryType === item.value ? "default" : "outline"}
+                  className="rounded-2xl"
+                  onClick={() => setSelectedLiteraryType(item.value)}
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <label className="text-sm font-medium text-stone-700">
+              棚タグ <span className="text-red-500">*</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {shelfTags.map((item) => (
+                <Button
+                  key={item.value}
+                  type="button"
+                  variant={selectedShelfTag === item.value ? "default" : "outline"}
+                  className="rounded-2xl"
+                  onClick={() => setSelectedShelfTag(item.value)}
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <label className="text-sm font-medium text-stone-700">
+              背表紙の色
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {coverColors.map((item) => (
+                <Button
+                  key={item.value}
+                  type="button"
+                  variant={selectedCoverColor === item.value ? "default" : "outline"}
+                  className="rounded-2xl"
+                  onClick={() => setSelectedCoverColor(item.value)}
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <label className="text-sm font-medium text-stone-700">
+              装丁スタイル
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {coverStyles.map((item) => (
+                <Button
+                  key={item.value}
+                  type="button"
+                  variant={selectedCoverStyle === item.value ? "default" : "outline"}
+                  className="rounded-2xl"
+                  onClick={() => setSelectedCoverStyle(item.value)}
+                >
+                  {item.label}
                 </Button>
               ))}
             </div>
