@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import BookReader from "@/components/BookReader";
+import { paginateVerticalJapaneseText } from "@/lib/reader-pagination";
 import Link from "next/link";
 
 type PublishedWork = {
@@ -28,68 +29,6 @@ function extractIdFromSlug(slug?: string) {
   if (!slug) return null;
   const match = slug.match(/-(\d+)$/);
   return match ? Number(match[1]) : null;
-}
-
-function paginateContent(content: string) {
-  const normalized = content.replace(/\r\n/g, "\n").trim();
-
-  if (!normalized) return ["本文がありません。"];
-
-  const rawParagraphs = normalized
-    .split(/\n\s*\n/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  const chunks: string[] = [];
-
-  for (const paragraph of rawParagraphs) {
-    if (paragraph.length <= 220) {
-      chunks.push(paragraph);
-      continue;
-    }
-
-    const sentences = paragraph.match(/[^。！？!?]+[。！？!?]?/g) ?? [paragraph];
-    let buffer = "";
-
-    for (const sentence of sentences) {
-      const next = `${buffer}${sentence}`;
-
-      if (buffer && next.length > 220) {
-        chunks.push(buffer.trim());
-        buffer = sentence;
-      } else {
-        buffer = next;
-      }
-    }
-
-    if (buffer.trim()) {
-      chunks.push(buffer.trim());
-    }
-  }
-
-  const pages: string[] = [];
-  let pageBuffer: string[] = [];
-  let pageLength = 0;
-
-  for (const chunk of chunks) {
-    const chunkLength = chunk.length;
-    const nextLength = pageLength + chunkLength;
-
-    if (pageBuffer.length > 0 && nextLength > 385) {
-      pages.push(pageBuffer.join("\n\n"));
-      pageBuffer = [chunk];
-      pageLength = chunkLength;
-    } else {
-      pageBuffer.push(chunk);
-      pageLength = nextLength;
-    }
-  }
-
-  if (pageBuffer.length > 0) {
-    pages.push(pageBuffer.join("\n\n"));
-  }
-
-  return pages.length > 0 ? pages : ["本文がありません。"];
 }
 
 export default async function WorkReadPage({
@@ -153,7 +92,7 @@ export default async function WorkReadPage({
     );
   }
 
-  const pages = paginateContent(work.content);
+  const pages = paginateVerticalJapaneseText(work.content);
   const currentPage = Math.min(
     Math.max(Number(resolvedSearchParams?.page ?? "1") || 1, 1),
     pages.length
@@ -184,7 +123,7 @@ export default async function WorkReadPage({
                 pages={pages}
                 currentPage={currentPage}
                 basePath={`/works/${slug}/read`}
-                pageInfoLabel="Leaf"
+                pageInfoLabel="頁"
               />
             </div>
           </CardContent>

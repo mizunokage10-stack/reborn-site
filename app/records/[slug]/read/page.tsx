@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import BookReader from "@/components/BookReader";
+import { paginateVerticalJapaneseText } from "@/lib/reader-pagination";
 import Link from "next/link";
 
 type PublishedWork = {
@@ -47,9 +48,9 @@ function paginateRecordBodies(records: ReadingRecord[]) {
 
   for (const record of records) {
     const author = record.is_anonymous ? "匿名" : record.display_name || "無名";
-    const normalized = record.body.replace(/\r\n/g, "\n").trim();
+    const recordPages = paginateVerticalJapaneseText(record.body);
 
-    if (!normalized) {
+    if (recordPages.length === 1 && recordPages[0] === "本文がありません。") {
       pages.push({
         recordId: record.id,
         author,
@@ -59,60 +60,6 @@ function paginateRecordBodies(records: ReadingRecord[]) {
         totalPagesInRecord: 1,
       });
       continue;
-    }
-
-    const rawParagraphs = normalized
-      .split(/\n\s*\n/)
-      .map((item) => item.trim())
-      .filter(Boolean);
-
-    const chunks: string[] = [];
-
-    for (const paragraph of rawParagraphs) {
-      if (paragraph.length <= 220) {
-        chunks.push(paragraph);
-        continue;
-      }
-
-      const sentences = paragraph.match(/[^。！？!?]+[。！？!?]?/g) ?? [paragraph];
-      let buffer = "";
-
-      for (const sentence of sentences) {
-        const next = `${buffer}${sentence}`;
-
-        if (buffer && next.length > 220) {
-          chunks.push(buffer.trim());
-          buffer = sentence;
-        } else {
-          buffer = next;
-        }
-      }
-
-      if (buffer.trim()) {
-        chunks.push(buffer.trim());
-      }
-    }
-
-    const recordPages: string[] = [];
-    let pageBuffer: string[] = [];
-    let pageLength = 0;
-
-    for (const chunk of chunks) {
-      const chunkLength = chunk.length;
-      const nextLength = pageLength + chunkLength;
-
-      if (pageBuffer.length > 0 && nextLength > 385) {
-        recordPages.push(pageBuffer.join("\n\n"));
-        pageBuffer = [chunk];
-        pageLength = chunkLength;
-      } else {
-        pageBuffer.push(chunk);
-        pageLength = nextLength;
-      }
-    }
-
-    if (pageBuffer.length > 0) {
-      recordPages.push(pageBuffer.join("\n\n"));
     }
 
     const totalPagesInRecord = recordPages.length || 1;
@@ -275,7 +222,7 @@ export default async function RecordBookReadPage({
                 pages={pages.map((page) => page.content)}
                 currentPage={currentPage}
                 basePath={`/records/${slug}/read`}
-                pageInfoLabel="Leaf"
+                pageInfoLabel="頁"
               />
             </div>
           </CardContent>

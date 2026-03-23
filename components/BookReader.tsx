@@ -27,8 +27,8 @@ type FlipState = {
 };
 
 const flipTransition = {
-  duration: 0.82,
-  ease: [0.2, 0.8, 0.2, 1] as const,
+  duration: 0.76,
+  ease: [0.22, 0.79, 0.24, 0.99] as const,
 };
 
 const textStyle = {
@@ -46,7 +46,7 @@ function BookReaderComponent({
   className,
   currentPage = 1,
   basePath,
-  pageInfoLabel = "Page",
+  pageInfoLabel = "頁",
 }: BookReaderProps) {
   const shouldReduceMotion = useReducedMotion();
   const router = useRouter();
@@ -65,7 +65,7 @@ function BookReaderComponent({
     (nextIndex: number) => {
       const clamped = clampPage(nextIndex, safePages.length);
 
-      if (clamped === safeVisiblePageIndex || flipState) {
+      if (flipState || clamped === safeVisiblePageIndex) {
         return;
       }
 
@@ -85,8 +85,8 @@ function BookReaderComponent({
       flipState,
       pathname,
       router,
-      safeVisiblePageIndex,
       safePages.length,
+      safeVisiblePageIndex,
       searchParams,
     ]
   );
@@ -101,12 +101,12 @@ function BookReaderComponent({
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "ArrowRight") {
+      if (event.key === "ArrowLeft") {
         event.preventDefault();
         goNext();
       }
 
-      if (event.key === "ArrowLeft") {
+      if (event.key === "ArrowRight") {
         event.preventDefault();
         goPrev();
       }
@@ -122,11 +122,11 @@ function BookReaderComponent({
       const clickedLeftSide = event.clientX - bounds.left < bounds.width / 2;
 
       if (clickedLeftSide) {
-        goPrev();
+        goNext();
         return;
       }
 
-      goNext();
+      goPrev();
     },
     [goNext, goPrev]
   );
@@ -135,44 +135,44 @@ function BookReaderComponent({
   const currentLeaf = safePages[safeVisiblePageIndex];
   const targetLeaf = safePages[targetIndex];
   const isNextFlip = flipState?.direction === 1;
-  const overlayLeaf = flipState ? (isNextFlip ? currentLeaf : targetLeaf) : null;
+  const overlayLeaf = flipState ? currentLeaf : null;
   const underLeaf = flipState ? targetLeaf : currentLeaf;
 
   return (
     <section
       className={cn(
-        "w-full rounded-[2rem] border border-[#ded2bf] bg-[linear-gradient(180deg,#efe6d7_0%,#e4d6c1_100%)] p-4 text-stone-800 shadow-[0_20px_60px_rgba(87,63,33,0.12)] sm:p-6 md:p-8",
+        "w-full rounded-[2rem] border border-[#ddd0bb] bg-[linear-gradient(180deg,#f0e7d9_0%,#e3d5bf_100%)] p-3 text-stone-800 shadow-[0_18px_48px_rgba(89,66,37,0.11)] sm:p-5 md:p-7",
         className
       )}
       style={textStyle}
-      aria-label="Book reader"
+      aria-label="読書ページ"
     >
-      <div className="mb-4 flex items-center justify-between gap-3 text-sm text-stone-600 md:mb-6">
-        <button
-          type="button"
-          onClick={goPrev}
-          disabled={safeVisiblePageIndex === 0 || Boolean(flipState)}
-          className="rounded-full border border-[#d6c8b1] bg-white/78 px-4 py-2 shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
-          aria-label="前のページへ"
-        >
-          ← 前へ
-        </button>
-        <p className="text-center text-xs tracking-[0.3em] text-stone-500 uppercase">
-          {pageInfoLabel} {safeVisiblePageIndex + 1} / {safePages.length}
-        </p>
+      <div className="mb-3 flex items-center justify-between gap-3 text-sm text-stone-600 md:mb-5">
         <button
           type="button"
           onClick={goNext}
           disabled={safeVisiblePageIndex === safePages.length - 1 || Boolean(flipState)}
-          className="rounded-full border border-[#d6c8b1] bg-white/78 px-4 py-2 shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
-          aria-label="次のページへ"
+          className="order-1 rounded-full border border-[#d3c5ad] bg-white/80 px-4 py-2 shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
+          aria-label="次のページへ進む"
         >
-          次へ →
+          ← 次へ
+        </button>
+        <p className="order-2 text-center text-xs tracking-[0.2em] text-stone-500">
+          第 {safeVisiblePageIndex + 1} / {safePages.length} {pageInfoLabel}
+        </p>
+        <button
+          type="button"
+          onClick={goPrev}
+          disabled={safeVisiblePageIndex === 0 || Boolean(flipState)}
+          className="order-3 rounded-full border border-[#d3c5ad] bg-white/80 px-4 py-2 shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
+          aria-label="前のページへ戻る"
+        >
+          前へ →
         </button>
       </div>
 
-      <div className="rounded-[2rem] border border-white/45 bg-white/16 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] sm:p-5">
-        <div className="[perspective:2400px]">
+      <div className="rounded-[1.85rem] border border-white/50 bg-white/15 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] sm:p-4">
+        <div className="[perspective:2200px]">
           <div
             role="button"
             tabIndex={0}
@@ -183,22 +183,20 @@ function BookReaderComponent({
                 goNext();
               }
             }}
-            className="relative min-h-[520px] cursor-pointer overflow-hidden rounded-[1.8rem] border border-[#e7dbc8] bg-[linear-gradient(180deg,#f5ede1_0%,#ecdfcc_100%)] p-4 outline-none transition focus-visible:ring-2 focus-visible:ring-[#d4c2a3] sm:p-6 md:min-h-[720px] md:p-8"
-            aria-label="右側クリックで次のページ、左側クリックで前のページ"
+            className="relative min-h-[480px] cursor-pointer overflow-hidden rounded-[1.6rem] border border-[#e5d8c4] bg-[linear-gradient(180deg,#f6eee2_0%,#ece0cd_100%)] p-3 outline-none transition focus-visible:ring-2 focus-visible:ring-[#d3c09f] sm:min-h-[520px] sm:p-4 md:min-h-[720px] md:p-7"
+            aria-label="左側クリックで次のページ、右側クリックで前のページ"
           >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.72),transparent_42%),linear-gradient(180deg,rgba(255,255,255,0.12),rgba(120,94,52,0.06))]" />
-            <div className="absolute inset-y-7 left-1/2 w-[2px] -translate-x-1/2 bg-[linear-gradient(180deg,transparent,rgba(150,118,78,0.45),transparent)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.65),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.1),rgba(123,95,55,0.06))]" />
+            <div className="pointer-events-none absolute inset-y-5 left-1/2 w-px -translate-x-1/2 bg-[linear-gradient(180deg,transparent,rgba(162,131,87,0.55),transparent)] md:inset-y-8" />
 
-            <div className="absolute inset-y-9 left-6 right-6 rounded-[1.65rem] bg-[#f7f1e7] shadow-[inset_0_0_0_1px_rgba(213,199,177,0.8),0_16px_30px_rgba(104,78,42,0.08)] md:left-10 md:right-10" />
-            <div className="absolute inset-y-11 left-8 right-8 rounded-[1.5rem] border border-[#ece1d0] bg-[linear-gradient(180deg,#fffdfa_0%,#faf4ea_100%)] shadow-[0_18px_34px_rgba(110,84,49,0.1)] md:left-12 md:right-12" />
+            <div className="absolute inset-y-6 left-4 right-4 rounded-[1.4rem] bg-[#f8f2e9] shadow-[inset_0_0_0_1px_rgba(214,198,174,0.82),0_12px_28px_rgba(108,82,46,0.08)] sm:left-5 sm:right-5 md:inset-y-9 md:left-10 md:right-10" />
 
-            <div className="absolute inset-y-11 left-8 right-8 overflow-hidden rounded-[1.5rem] md:left-12 md:right-12">
-              <div className="absolute inset-y-0 left-0 w-[10%] bg-[linear-gradient(90deg,rgba(213,198,176,0.28),rgba(255,255,255,0))]" />
-              <div className="absolute inset-y-0 right-0 w-[12%] bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(213,198,176,0.22))]" />
-              <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[linear-gradient(180deg,transparent,rgba(201,183,155,0.7),transparent)]" />
+            <div className="absolute inset-y-7 left-5 right-5 overflow-hidden rounded-[1.25rem] border border-[#ece1d0] bg-[linear-gradient(180deg,#fffdf9_0%,#faf3e8_100%)] shadow-[0_14px_28px_rgba(110,84,49,0.08)] sm:left-6 sm:right-6 md:inset-y-11 md:left-12 md:right-12">
+              <div className="absolute inset-y-0 left-0 w-[8%] bg-[linear-gradient(90deg,rgba(212,196,171,0.22),rgba(255,255,255,0))]" />
+              <div className="absolute inset-y-0 right-0 w-[10%] bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(212,196,171,0.18))]" />
 
               <article className="relative z-10 h-full w-full">
-                <p className="book-reader-vertical h-full w-full whitespace-pre-wrap break-words px-8 py-9 text-[21px] leading-[2.2] tracking-[0.08em] text-stone-700 md:px-12 md:py-12 md:text-[24px]">
+                <p className="book-reader-vertical h-full w-full whitespace-pre-wrap break-words px-4 py-5 text-[16px] leading-[1.9] tracking-[0.04em] text-stone-700 sm:px-5 sm:py-6 sm:text-[17px] md:px-12 md:py-11 md:text-[21px] md:leading-[2.08] md:tracking-[0.06em]">
                   {underLeaf}
                 </p>
               </article>
@@ -212,14 +210,14 @@ function BookReaderComponent({
                         ? { opacity: 0 }
                         : isNextFlip
                           ? { rotateY: 0, x: "0%", opacity: 1 }
-                          : { rotateY: 168, x: "-4%", opacity: 0.96 }
+                          : { rotateY: 0, x: "0%", opacity: 1 }
                     }
                     animate={
                       shouldReduceMotion
                         ? { opacity: 1 }
                         : isNextFlip
-                          ? { rotateY: -168, x: "-4%", opacity: 0.96 }
-                          : { rotateY: 0, x: "0%", opacity: 1 }
+                          ? { rotateY: 168, x: "4%", opacity: 0.94 }
+                          : { rotateY: -168, x: "-4%", opacity: 0.94 }
                     }
                     exit={{ opacity: 0 }}
                     transition={flipTransition}
@@ -229,22 +227,28 @@ function BookReaderComponent({
                     className="absolute inset-0 z-20"
                     style={{
                       transformStyle: "preserve-3d",
-                      transformOrigin: isNextFlip ? "left center" : "right center",
+                      transformOrigin: isNextFlip ? "right center" : "left center",
                     }}
                   >
-                    <article className="relative h-full w-full overflow-hidden rounded-[1.5rem] border border-[#e9decd] bg-[linear-gradient(180deg,#fffefb_0%,#f9f4eb_100%)] shadow-[0_20px_36px_rgba(111,83,47,0.18)]">
-                      <div className="absolute inset-y-0 left-0 w-[14%] bg-[linear-gradient(90deg,rgba(214,197,171,0.34),rgba(255,255,255,0))]" />
-                      <div className="absolute inset-y-0 right-0 w-[16%] bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(193,171,140,0.3))]" />
+                    <article className="relative h-full w-full overflow-hidden rounded-[1.25rem] border border-[#eadfce] bg-[linear-gradient(180deg,#fffefb_0%,#f9f3e9_100%)] shadow-[0_18px_34px_rgba(111,83,47,0.16)]">
+                      <div
+                        className={cn(
+                          "absolute inset-y-0 w-[14%]",
+                          isNextFlip
+                            ? "left-0 bg-[linear-gradient(90deg,rgba(126,94,53,0.22),rgba(255,255,255,0))]"
+                            : "right-0 bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(126,94,53,0.22))]"
+                        )}
+                      />
                       <div
                         className={cn(
                           "absolute inset-y-0 w-[12%]",
                           isNextFlip
-                            ? "right-0 bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(112,84,44,0.22))]"
-                            : "left-0 bg-[linear-gradient(90deg,rgba(112,84,44,0.22),rgba(255,255,255,0))]"
+                            ? "right-0 bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(214,197,171,0.26))]"
+                            : "left-0 bg-[linear-gradient(90deg,rgba(214,197,171,0.26),rgba(255,255,255,0))]"
                         )}
                       />
 
-                      <p className="book-reader-vertical h-full w-full whitespace-pre-wrap break-words px-8 py-9 text-[21px] leading-[2.2] tracking-[0.08em] text-stone-700 md:px-12 md:py-12 md:text-[24px]">
+                      <p className="book-reader-vertical h-full w-full whitespace-pre-wrap break-words px-4 py-5 text-[16px] leading-[1.9] tracking-[0.04em] text-stone-700 sm:px-5 sm:py-6 sm:text-[17px] md:px-12 md:py-11 md:text-[21px] md:leading-[2.08] md:tracking-[0.06em]">
                         {overlayLeaf}
                       </p>
                     </article>
@@ -256,8 +260,8 @@ function BookReaderComponent({
         </div>
       </div>
 
-      <p className="mt-4 text-center text-sm text-stone-500 md:mt-6">
-        右側クリックで次のページを左へ捲り、左側クリックで前のページへ戻れます。キーボードの ← → にも対応しています。
+      <p className="mt-3 text-center text-xs leading-6 text-stone-500 md:mt-5 md:text-sm">
+        左側で次の頁へ、右側で前の頁へ。キーボードは ← で次、→ で前です。
       </p>
     </section>
   );
