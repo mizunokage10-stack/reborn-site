@@ -470,11 +470,11 @@ function BookReaderComponent({
         return;
       }
 
-      if (deltaX <= -SWIPE_THRESHOLD) {
+      if (deltaX >= SWIPE_THRESHOLD) {
         goNext();
       }
 
-      if (deltaX >= SWIPE_THRESHOLD) {
+      if (deltaX <= -SWIPE_THRESHOLD) {
         goPrev();
       }
     },
@@ -538,7 +538,7 @@ function BookReaderComponent({
               }
             }}
             className="relative min-h-[430px] cursor-pointer overflow-hidden rounded-[1.45rem] border border-[#e5d8c4] bg-[linear-gradient(180deg,#fdfbf7_0%,#f2e9db_100%)] p-2.5 outline-none transition focus-visible:ring-2 focus-visible:ring-[#d3c09f] touch-pan-y sm:min-h-[500px] sm:p-3.5 md:min-h-[720px] md:p-7"
-            aria-label="左側タップまたは左スワイプで次のページ、右側タップまたは右スワイプで前のページ"
+            aria-label="左側タップまたは右スワイプで次のページ、右側タップまたは左スワイプで前のページ"
           >
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.62),transparent_42%)]" />
             <div className="pointer-events-none absolute inset-y-4 left-1/2 w-px -translate-x-1/2 bg-[linear-gradient(180deg,transparent,rgba(162,131,87,0.55),transparent)] md:inset-y-8" />
@@ -605,7 +605,7 @@ function BookReaderComponent({
       </div>
 
       <p className="mt-3 text-center text-xs leading-6 text-stone-500 md:mt-5 md:text-sm">
-        左側タップまたは左スワイプで次の頁へ、右側タップまたは右スワイプで前の頁へ戻れます。キーボードは ← で次、→ で前です。
+        左側タップまたは右スワイプで次の頁へ、右側タップまたは左スワイプで前の頁へ戻れます。キーボードは ← で次、→ で前です。
       </p>
     </section>
   );
