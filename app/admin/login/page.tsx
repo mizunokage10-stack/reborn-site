@@ -13,7 +13,7 @@ export default function AdminLoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const redirectTo = "/admin/submissions";
+  const redirectTo = "/admin";
 
   async function handleLogin() {
     setLoading(true);

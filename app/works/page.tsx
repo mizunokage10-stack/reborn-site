@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import RebornShell from "@/components/reborn/shell";
 import { categories } from "@/lib/sample-data";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,6 +67,7 @@ function slugify(title: string, id: number) {
 function categoryShelfLabel(category: string) {
   const labels: Record<string, string> = {
     小説: "物語の棚",
+    日常: "日々の棚",
     日記: "日々の棚",
     文芸批評: "批評の棚",
     俳句: "短詩の棚",
@@ -81,19 +83,30 @@ function literaryTypeLabel(value: string | null) {
   return "純文学";
 }
 
-function shelfTagLabel(value: string | null) {
-  const labels: Record<string, string> = {
-    mystery: "推理",
-    romance: "恋愛",
-    dream: "夢",
-    strange: "怪異",
-    family: "家族",
-    city: "都市",
-    experimental: "実験",
-    other: "その他",
-  };
+function spineTitleClass(title: string) {
+  if (title.length >= 18) {
+    return "px-[2px] text-[11px] leading-[1.15rem] tracking-[0.01em] md:text-[12px] md:leading-[1.2rem]";
+  }
 
-  return labels[value ?? "other"] ?? "その他";
+  if (title.length >= 11) {
+    return "px-[2px] text-[12px] leading-[1.2rem] tracking-[0.02em] md:text-[13px] md:leading-[1.3rem]";
+  }
+
+  return "px-[1px] text-[13px] leading-[1.35rem] tracking-[0.04em] md:text-[15px] md:leading-[1.45rem]";
+}
+
+function selectCategory(
+  nextCategory: string,
+  setCategory: (value: string) => void,
+  setLiteraryType: (value: string) => void,
+  setShelfTag: (value: string) => void
+) {
+  setCategory(nextCategory);
+
+  if (nextCategory !== "小説") {
+    setLiteraryType("all");
+    setShelfTag("all");
+  }
 }
 
 function coverColorGradient(color: string | null) {
@@ -143,7 +156,6 @@ function groupByCategory(works: ShelfItem[]) {
     }))
     .filter((group) => group.items.length > 0);
 }
-
 
 function groupNovelsByTypeAndShelf(works: ShelfItem[]) {
   const typeOrder = ["pure", "popular"];
@@ -271,13 +283,6 @@ export default function WorksPage() {
     fetchWorks();
   }, []);
 
-  useEffect(() => {
-    if (category !== "小説") {
-      setLiteraryType("all");
-      setShelfTag("all");
-    }
-  }, [category]);
-
   const filtered = useMemo(() => {
     return works.filter((work) => {
       const categoryMatch = category === "すべて" || work.category === category;
@@ -333,7 +338,9 @@ export default function WorksPage() {
                     type="button"
                     variant={category === item ? "default" : "outline"}
                     className="rounded-2xl"
-                    onClick={() => setCategory(item)}
+                    onClick={() =>
+                      selectCategory(item, setCategory, setLiteraryType, setShelfTag)
+                    }
                   >
                     {item}
                   </Button>
@@ -467,15 +474,20 @@ export default function WorksPage() {
                             </div>
 
                             <div className="relative z-10 flex-1 py-4">
-                              <div className="mx-auto h-full w-full rounded-full border border-white/10 bg-black/10 px-1 py-3">
-                                <div className="writing-mode-vertical-rl mx-auto h-full text-center text-[15px] font-medium leading-6 tracking-[0.08em] text-stone-50 md:text-[17px]">
+                              <div className="mx-auto h-full w-full overflow-hidden rounded-full border border-white/10 bg-black/10 px-1 py-3">
+                                <div
+                                  className={cn(
+                                    "writing-mode-vertical-rl mx-auto flex h-full max-h-full max-w-full items-center justify-center overflow-hidden text-center font-medium text-stone-50",
+                                    spineTitleClass(work.title)
+                                  )}
+                                >
                                   {work.title}
                                 </div>
                               </div>
                             </div>
 
                             <div className="relative z-10 border-t border-white/20 pt-2 text-[10px] leading-4 text-stone-200/85 md:text-xs">
-                              <div className="line-clamp-2 text-center">{work.pen_name}</div>
+                              <div className="line-clamp-2 break-words text-center">{work.pen_name}</div>
                             </div>
                           </Link>
                         ))}
@@ -520,15 +532,20 @@ export default function WorksPage() {
                         </div>
 
                         <div className="relative z-10 flex-1 py-4">
-                          <div className="mx-auto h-full w-full rounded-full border border-white/10 bg-black/10 px-1 py-3">
-                            <div className="writing-mode-vertical-rl mx-auto h-full text-center text-[15px] font-medium leading-6 tracking-[0.08em] text-stone-50 md:text-[17px]">
+                          <div className="mx-auto h-full w-full overflow-hidden rounded-full border border-white/10 bg-black/10 px-1 py-3">
+                            <div
+                              className={cn(
+                                "writing-mode-vertical-rl mx-auto flex h-full max-h-full max-w-full items-center justify-center overflow-hidden text-center font-medium text-stone-50",
+                                spineTitleClass(work.title)
+                              )}
+                            >
                               {work.title}
                             </div>
                           </div>
                         </div>
 
                         <div className="relative z-10 border-t border-white/20 pt-2 text-[10px] leading-4 text-stone-200/85 md:text-xs">
-                          <div className="line-clamp-2 text-center">{work.pen_name}</div>
+                          <div className="line-clamp-2 break-words text-center">{work.pen_name}</div>
                         </div>
                       </Link>
                     ))}

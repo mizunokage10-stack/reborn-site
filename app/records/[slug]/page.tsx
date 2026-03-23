@@ -180,18 +180,21 @@ export default async function RecordBookPage({
                     <div className="space-y-2">
                       <h2 className="text-2xl font-semibold text-stone-900">記録本について</h2>
                       <p className="leading-8 text-stone-600">
-                        ここに綴られているのは、読者たちがこの作品を読んだあとに残した公開記録です。感想や立ち止まった箇所、誰かと話したくなった気持ちなどが、一冊の本として静かにまとめられています。本文は、他の作品と同じように読書ページで読める形にしていきます。
+                        ここに綴られているのは、読者たちがこの作品を読んだあとに残した公開記録です。感想や立ち止まった箇所、誰かと話したくなった気持ちなどが、一冊の本として静かにまとめられています。
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
-                      <Button asChild className="rounded-2xl">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      <Button asChild className="rounded-2xl justify-center">
                         <Link href={`/records/${slug}/read`}>本を読む</Link>
                       </Button>
-                      <Button asChild variant="outline" className="rounded-2xl">
+                      <Button asChild variant="outline" className="rounded-2xl justify-center">
                         <Link href={`/works/${slug}`}>元の本をひらく</Link>
                       </Button>
-                      <Button asChild variant="outline" className="rounded-2xl">
+                      <Button asChild variant="outline" className="rounded-2xl justify-center">
+                        <Link href={`/works/${slug}/record`}>この本に記録を残す</Link>
+                      </Button>
+                      <Button asChild variant="outline" className="rounded-2xl justify-center">
                         <Link href="/records">記録の書架へ戻る</Link>
                       </Button>
                     </div>
@@ -201,15 +204,12 @@ export default async function RecordBookPage({
                     <div className="rounded-3xl border border-stone-200 bg-stone-50 p-5">
                       <div className="space-y-3">
                         <h3 className="text-xl font-semibold text-stone-900">この本を読む</h3>
-                        <p className="leading-8 text-stone-600">
-                          この記録本には、{records.length}篇の公開記録が綴られています。ここでは本についての説明だけを置き、実際の記録本文は読書ページで他の作品と同じように読める形にしていきます。
-                        </p>
+                        <div className="text-sm leading-7 text-stone-500">
+                          {records.length}篇の公開記録が収められています。
+                        </div>
                         <div className="flex flex-wrap gap-3">
                           <Button asChild className="rounded-2xl">
                             <Link href={`/records/${slug}/read`}>本を読む</Link>
-                          </Button>
-                          <Button asChild variant="outline" className="rounded-2xl">
-                            <Link href={`/works/${slug}`}>元の本をひらく</Link>
                           </Button>
                           <Button asChild variant="outline" className="rounded-2xl">
                             <Link href={`/works/${slug}/record`}>この本に記録を残す</Link>

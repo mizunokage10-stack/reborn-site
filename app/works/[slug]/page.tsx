@@ -85,6 +85,7 @@ function extractIdFromSlug(slug?: string) {
 function categoryLabel(category: string) {
   const labels: Record<string, string> = {
     小説: "物語の棚",
+    日常: "日々の棚",
     日記: "日々の棚",
     文芸批評: "批評の棚",
     俳句: "短詩の棚",

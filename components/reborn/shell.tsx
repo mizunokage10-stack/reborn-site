@@ -67,9 +67,9 @@ export default function RebornShell({ children }: { children: React.ReactNode })
             ) : (
               <div className="flex flex-wrap items-center gap-3">
                 <Button asChild variant="ghost" className="rounded-2xl">
-                  <Link href="/admin/submissions">
+                  <Link href="/admin">
                     <PanelLeft className="mr-2 h-4 w-4" />
-                    投稿管理
+                    管理トップ
                   </Link>
                 </Button>
                 <Button

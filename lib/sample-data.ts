@@ -1,4 +1,4 @@
-export const categories = ["すべて", "小説", "日記", "文芸批評", "俳句", "絵"];
+export const categories = ["すべて", "小説", "日常", "日記", "文芸批評", "俳句", "絵"];
 
 export const sampleWorks = [
   {

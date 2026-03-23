@@ -51,7 +51,7 @@ const supabase = createClient(
 export default async function AdminSubmissionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; section?: string }>;
 }) {
   async function markAsPending(formData: FormData) {
     "use server";
@@ -67,7 +67,10 @@ export default async function AdminSubmissionsPage({
       throw new Error(`保留への更新に失敗しました: ${error.message}`);
     }
 
+    revalidatePath("/admin");
     revalidatePath("/admin/submissions");
+    revalidatePath("/admin/records");
+    revalidatePath("/admin/gather");
   }
 
   async function markAsPublished(formData: FormData) {
@@ -84,7 +87,10 @@ export default async function AdminSubmissionsPage({
       throw new Error(`公開への更新に失敗しました: ${error.message}`);
     }
 
+    revalidatePath("/admin");
     revalidatePath("/admin/submissions");
+    revalidatePath("/admin/records");
+    revalidatePath("/admin/gather");
   }
 
   async function markAsRejected(formData: FormData) {
@@ -101,7 +107,10 @@ export default async function AdminSubmissionsPage({
       throw new Error(`却下への更新に失敗しました: ${error.message}`);
     }
 
+    revalidatePath("/admin");
     revalidatePath("/admin/submissions");
+    revalidatePath("/admin/records");
+    revalidatePath("/admin/gather");
   }
 
   async function deleteSubmission(formData: FormData) {
@@ -118,7 +127,10 @@ export default async function AdminSubmissionsPage({
       throw new Error(`削除に失敗しました: ${error.message}`);
     }
 
+    revalidatePath("/admin");
     revalidatePath("/admin/submissions");
+    revalidatePath("/admin/records");
+    revalidatePath("/admin/gather");
     revalidatePath("/");
     revalidatePath("/works");
   }
@@ -137,7 +149,10 @@ export default async function AdminSubmissionsPage({
       throw new Error(`記録の削除に失敗しました: ${error.message}`);
     }
 
+    revalidatePath("/admin");
     revalidatePath("/admin/submissions");
+    revalidatePath("/admin/records");
+    revalidatePath("/admin/gather");
     revalidatePath("/works");
     revalidatePath("/records");
   }
@@ -156,12 +171,16 @@ export default async function AdminSubmissionsPage({
       throw new Error(`集いたいデータの削除に失敗しました: ${error.message}`);
     }
 
+    revalidatePath("/admin");
     revalidatePath("/admin/submissions");
+    revalidatePath("/admin/records");
+    revalidatePath("/admin/gather");
     revalidatePath("/works");
   }
 
   const resolvedSearchParams = await searchParams;
   const statusFilter = resolvedSearchParams?.status ?? "all";
+  const sectionFilter = resolvedSearchParams?.section ?? "submissions";
 
   const { data, error } = await supabase
     .from("submissions")
@@ -197,6 +216,12 @@ export default async function AdminSubmissionsPage({
     return (item.status ?? "submitted") === statusFilter;
   });
 
+  const sectionLinks = [
+    { label: "投稿確認", value: "submissions", href: "/admin/submissions" },
+    { label: "記録管理", value: "records", href: "/admin/records" },
+    { label: "集いたい管理", value: "gather", href: "/admin/gather" },
+  ];
+
   return (
     <RebornShell>
       <div className="grid gap-4">
@@ -220,157 +245,181 @@ export default async function AdminSubmissionsPage({
 
         <Card className="rounded-3xl border-stone-200 shadow-sm">
           <CardHeader>
-            <CardTitle>投稿確認画面</CardTitle>
+            <CardTitle>管理カテゴリ</CardTitle>
             <CardDescription>
-              投稿された作品を確認し、公開・保留・却下を管理します。
+              まず管理対象を選び、その先で一覧を確認できる構成です。
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-3">
-            <div className="flex flex-wrap gap-2">
-              {[
-                { label: "すべて", value: "all" },
-                { label: "未確認", value: "submitted" },
-                { label: "保留", value: "pending" },
-                { label: "公開済み", value: "published" },
-                { label: "却下", value: "rejected" },
-              ].map((filter) => {
-                const isActive = statusFilter === filter.value;
-
-                return (
-                  <Button
-                    key={filter.value}
-                    asChild
-                    variant={isActive ? "default" : "outline"}
-                    className="rounded-2xl"
-                  >
-                    <Link
-                      href={
-                        filter.value === "all"
-                          ? "/admin/submissions"
-                          : `/admin/submissions?status=${filter.value}`
-                      }
-                    >
-                      {filter.label}
-                    </Link>
-                  </Button>
-                );
-              })}
-            </div>
-
-            {error && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                読み込みに失敗しました: {error.message}
-              </div>
-            )}
-
-            {!error && filteredSubmissions.length === 0 && (
-              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
-                この条件に当てはまる投稿はありません。
-              </div>
-            )}
-
-            {filteredSubmissions.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-stone-200 p-4">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <div className="font-medium">{item.title}</div>
-                    <div className="text-sm text-stone-500">
-                      {item.pen_name} ・ {item.category} ・ {new Date(item.created_at).toLocaleString("ja-JP")}
-                    </div>
-                  </div>
-                  <Badge className="rounded-full">{item.status ?? "submitted"}</Badge>
-                </div>
-
-                {item.summary && (
-                  <p className="mb-3 text-sm leading-6 text-stone-700">{item.summary}</p>
-                )}
-
-                <div className="mb-3 rounded-2xl bg-stone-50 p-3 text-sm leading-6 text-stone-700">
-                  {item.content.length > 180
-                    ? `${item.content.slice(0, 180)}…`
-                    : item.content}
-                </div>
-
-                <div className="mb-3 grid gap-2 text-sm text-stone-600 md:grid-cols-2">
-                  <div>メール: {item.email}</div>
-                  <div>文学タイプ: {item.literary_type === "popular" ? "大衆文学" : "純文学"}</div>
-                  <div>
-                    棚タグ: {
-                      item.shelf_tag === "mystery" ? "推理" :
-                      item.shelf_tag === "romance" ? "恋愛" :
-                      item.shelf_tag === "dream" ? "夢" :
-                      item.shelf_tag === "strange" ? "怪異" :
-                      item.shelf_tag === "family" ? "家族" :
-                      item.shelf_tag === "city" ? "都市" :
-                      item.shelf_tag === "experimental" ? "実験" :
-                      "その他"
-                    }
-                  </div>
-                  <div>
-                    背表紙の色: {
-                      item.cover_color === "ink" ? "墨" :
-                      item.cover_color === "navy" ? "紺碧" :
-                      item.cover_color === "emerald" ? "深緑" :
-                      item.cover_color === "burgundy" ? "臙脂" :
-                      item.cover_color === "amber" ? "朽葉" :
-                      item.cover_color === "violet" ? "紫紺" :
-                      "灰青"
-                    }
-                  </div>
-                  <div>
-                    装丁スタイル: {
-                      item.cover_style === "minimal" ? "静かな装丁" :
-                      item.cover_style === "classic" ? "古典的な装丁" :
-                      item.cover_style === "soft" ? "柔らかな装丁" :
-                      item.cover_style === "heavy" ? "重たい装丁" :
-                      "鋭い装丁"
-                    }
-                  </div>
-                  <div>朗読許可: {item.allow_read_aloud ? "可" : "不可"}</div>
-                  <div>SNS紹介許可: {item.allow_sns_promo ? "可" : "不可"}</div>
-                  {item.external_url && <div className="md:col-span-2">外部リンク: {item.external_url}</div>}
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <details className="w-full rounded-2xl border border-stone-200 bg-stone-50 p-3 text-sm text-stone-700">
-                    <summary className="cursor-pointer font-medium">内容確認</summary>
-                    <div className="mt-3 whitespace-pre-wrap leading-7 text-stone-800">
-                      {item.content}
-                    </div>
-                  </details>
-
-                  <form action={markAsPending}>
-                    <input type="hidden" name="id" value={item.id} />
-                    <Button type="submit" variant="outline" className="rounded-2xl">
-                      保留
-                    </Button>
-                  </form>
-
-                  <form action={markAsPublished}>
-                    <input type="hidden" name="id" value={item.id} />
-                    <Button type="submit" className="rounded-2xl">
-                      公開
-                    </Button>
-                  </form>
-                  <form action={markAsRejected}>
-                    <input type="hidden" name="id" value={item.id} />
-                    <Button type="submit" variant="outline" className="rounded-2xl">
-                      却下
-                    </Button>
-                  </form>
-                  <form action={deleteSubmission}>
-                    <input type="hidden" name="id" value={item.id} />
-                    <Button type="submit" variant="outline" className="rounded-2xl">
-                      削除
-                    </Button>
-                  </form>
-                </div>
-              </div>
+          <CardContent className="flex flex-wrap gap-2">
+            {sectionLinks.map((section) => (
+              <Button
+                key={section.value}
+                asChild
+                variant={sectionFilter === section.value ? "default" : "outline"}
+                className="rounded-2xl"
+              >
+                <Link href={section.href}>{section.label}</Link>
+              </Button>
             ))}
           </CardContent>
         </Card>
 
-        <Card className="rounded-3xl border-stone-200 shadow-sm">
+        {sectionFilter === "submissions" && (
+          <Card className="rounded-3xl border-stone-200 shadow-sm">
+            <CardHeader>
+              <CardTitle>投稿確認画面</CardTitle>
+              <CardDescription>
+                投稿された作品を確認し、公開・保留・却下を管理します。
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: "すべて", value: "all" },
+                  { label: "未確認", value: "submitted" },
+                  { label: "保留", value: "pending" },
+                  { label: "公開済み", value: "published" },
+                  { label: "却下", value: "rejected" },
+                ].map((filter) => {
+                  const isActive = statusFilter === filter.value;
+
+                  return (
+                    <Button
+                      key={filter.value}
+                      asChild
+                      variant={isActive ? "default" : "outline"}
+                      className="rounded-2xl"
+                    >
+                      <Link
+                        href={
+                          filter.value === "all"
+                            ? "/admin/submissions"
+                            : `/admin/submissions?status=${filter.value}`
+                        }
+                      >
+                        {filter.label}
+                      </Link>
+                    </Button>
+                  );
+                })}
+              </div>
+
+              {error && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                  読み込みに失敗しました: {error.message}
+                </div>
+              )}
+
+              {!error && filteredSubmissions.length === 0 && (
+                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
+                  この条件に当てはまる投稿はありません。
+                </div>
+              )}
+
+              {filteredSubmissions.map((item) => (
+                <div key={item.id} className="rounded-2xl border border-stone-200 p-4">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <div className="font-medium">{item.title}</div>
+                      <div className="text-sm text-stone-500">
+                        {item.pen_name} ・ {item.category} ・ {new Date(item.created_at).toLocaleString("ja-JP")}
+                      </div>
+                    </div>
+                    <Badge className="rounded-full">{item.status ?? "submitted"}</Badge>
+                  </div>
+
+                  {item.summary && (
+                    <p className="mb-3 text-sm leading-6 text-stone-700">{item.summary}</p>
+                  )}
+
+                  <div className="mb-3 rounded-2xl bg-stone-50 p-3 text-sm leading-6 text-stone-700">
+                    {item.content.length > 180
+                      ? `${item.content.slice(0, 180)}…`
+                      : item.content}
+                  </div>
+
+                  <div className="mb-3 grid gap-2 text-sm text-stone-600 md:grid-cols-2">
+                    <div>メール: {item.email}</div>
+                    <div>文学タイプ: {item.literary_type === "popular" ? "大衆文学" : "純文学"}</div>
+                    <div>
+                      棚タグ: {
+                        item.shelf_tag === "mystery" ? "推理" :
+                        item.shelf_tag === "romance" ? "恋愛" :
+                        item.shelf_tag === "dream" ? "夢" :
+                        item.shelf_tag === "strange" ? "怪異" :
+                        item.shelf_tag === "family" ? "家族" :
+                        item.shelf_tag === "city" ? "都市" :
+                        item.shelf_tag === "experimental" ? "実験" :
+                        "その他"
+                      }
+                    </div>
+                    <div>
+                      背表紙の色: {
+                        item.cover_color === "ink" ? "墨" :
+                        item.cover_color === "navy" ? "紺碧" :
+                        item.cover_color === "emerald" ? "深緑" :
+                        item.cover_color === "burgundy" ? "臙脂" :
+                        item.cover_color === "amber" ? "朽葉" :
+                        item.cover_color === "violet" ? "紫紺" :
+                        "灰青"
+                      }
+                    </div>
+                    <div>
+                      装丁スタイル: {
+                        item.cover_style === "minimal" ? "静かな装丁" :
+                        item.cover_style === "classic" ? "古典的な装丁" :
+                        item.cover_style === "soft" ? "柔らかな装丁" :
+                        item.cover_style === "heavy" ? "重たい装丁" :
+                        "鋭い装丁"
+                      }
+                    </div>
+                    <div>朗読許可: {item.allow_read_aloud ? "可" : "不可"}</div>
+                    <div>SNS紹介許可: {item.allow_sns_promo ? "可" : "不可"}</div>
+                    {item.external_url && <div className="md:col-span-2">外部リンク: {item.external_url}</div>}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <details className="w-full rounded-2xl border border-stone-200 bg-stone-50 p-3 text-sm text-stone-700">
+                      <summary className="cursor-pointer font-medium">内容確認</summary>
+                      <div className="mt-3 whitespace-pre-wrap leading-7 text-stone-800">
+                        {item.content}
+                      </div>
+                    </details>
+
+                    <form action={markAsPending}>
+                      <input type="hidden" name="id" value={item.id} />
+                      <Button type="submit" variant="outline" className="rounded-2xl">
+                        保留
+                      </Button>
+                    </form>
+
+                    <form action={markAsPublished}>
+                      <input type="hidden" name="id" value={item.id} />
+                      <Button type="submit" className="rounded-2xl">
+                        公開
+                      </Button>
+                    </form>
+                    <form action={markAsRejected}>
+                      <input type="hidden" name="id" value={item.id} />
+                      <Button type="submit" variant="outline" className="rounded-2xl">
+                        却下
+                      </Button>
+                    </form>
+                    <form action={deleteSubmission}>
+                      <input type="hidden" name="id" value={item.id} />
+                      <Button type="submit" variant="outline" className="rounded-2xl">
+                        削除
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {sectionFilter === "records" && (
+          <Card className="rounded-3xl border-stone-200 shadow-sm">
           <CardHeader>
             <CardTitle>記録管理</CardTitle>
             <CardDescription>
@@ -435,7 +484,10 @@ export default async function AdminSubmissionsPage({
             })}
           </CardContent>
         </Card>
-        <Card className="rounded-3xl border-stone-200 shadow-sm">
+        )}
+
+        {sectionFilter === "gather" && (
+          <Card className="rounded-3xl border-stone-200 shadow-sm">
           <CardHeader>
             <CardTitle>集いたい管理</CardTitle>
             <CardDescription>
@@ -486,6 +538,7 @@ export default async function AdminSubmissionsPage({
             })}
           </CardContent>
         </Card>
+        )}
       </div>
     </RebornShell>
   );
