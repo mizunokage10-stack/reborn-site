@@ -38,11 +38,16 @@ type ReaderMetrics = {
 const SWIPE_THRESHOLD = 42;
 const SWIPE_VERTICAL_TOLERANCE = 30;
 const FLIP_DURATION_MS = 680;
+const MEASUREMENT_TOLERANCE_PX = 2;
+const MIN_FRAGMENT_LENGTH = 24;
 
 const textStyle = {
   fontFamily:
     '"MS Mincho", "MS 明朝", "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Times New Roman", serif',
 };
+
+const pageTextClass =
+  "book-reader-vertical h-full w-full whitespace-pre-wrap break-words px-3 py-4 text-[14px] leading-[1.62] tracking-[0.01em] text-stone-700 sm:px-4 sm:py-5 sm:text-[15px] sm:leading-[1.68] md:px-12 md:py-11 md:text-[20px] md:leading-[1.96] md:tracking-[0.04em]";
 
 function clampPage(value: number, total: number) {
   if (total <= 0) return 0;
@@ -118,6 +123,128 @@ function paginateSourceText(sourceText: string, estimatedCapacity: number) {
   return result.length > 0 ? result : ["本文がありません。"];
 }
 
+function findNaturalSplitIndex(text: string, targetIndex: number) {
+  const upperBound = Math.min(text.length, targetIndex);
+
+  for (let index = upperBound; index > MIN_FRAGMENT_LENGTH; index -= 1) {
+    const char = text[index - 1];
+
+    if (/[\n、。！？!?）)」』】]/.test(char)) {
+      return index;
+    }
+  }
+
+  return upperBound;
+}
+
+function splitChunkToFit(
+  chunk: string,
+  fits: (content: string) => boolean,
+  fallbackLength: number
+) {
+  const trimmedChunk = chunk.trim();
+
+  if (!trimmedChunk) {
+    return [];
+  }
+
+  if (fits(trimmedChunk)) {
+    return [trimmedChunk];
+  }
+
+  const fragments: string[] = [];
+  let remaining = trimmedChunk;
+
+  while (remaining) {
+    let low = 1;
+    let high = remaining.length;
+    let best = 0;
+
+    while (low <= high) {
+      const middle = Math.floor((low + high) / 2);
+      const candidate = remaining.slice(0, middle).trim();
+
+      if (!candidate) {
+        low = middle + 1;
+        continue;
+      }
+
+      if (fits(candidate)) {
+        best = middle;
+        low = middle + 1;
+      } else {
+        high = middle - 1;
+      }
+    }
+
+    const safeLength =
+      best > 0
+        ? best < remaining.length
+          ? findNaturalSplitIndex(remaining, best)
+          : best
+        : Math.min(remaining.length, Math.max(1, fallbackLength));
+    const nextFragment = remaining.slice(0, safeLength).trim();
+
+    if (!nextFragment) {
+      break;
+    }
+
+    fragments.push(nextFragment);
+    remaining = remaining.slice(safeLength).trim();
+  }
+
+  return fragments.length > 0 ? fragments : [trimmedChunk];
+}
+
+function paginateSourceTextToFit(
+  sourceText: string,
+  estimatedCapacity: number,
+  fits: (content: string) => boolean
+) {
+  const normalized = sourceText.replace(/\r\n/g, "\n").trim();
+
+  if (!normalized) {
+    return ["本文がありません。"];
+  }
+
+  const basePages = paginateSourceText(normalized, estimatedCapacity);
+
+  if (basePages.length <= 1 && fits(basePages[0] ?? "")) {
+    return basePages;
+  }
+
+  const rawParagraphs = normalized
+    .split(/\n\s*\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const sentenceChunkLimit = Math.max(80, Math.floor(estimatedCapacity * 0.42));
+  const fallbackLength = Math.max(18, Math.floor(sentenceChunkLimit * 0.55));
+  const chunks = rawParagraphs
+    .flatMap((paragraph) => splitParagraph(paragraph, sentenceChunkLimit))
+    .flatMap((chunk) => splitChunkToFit(chunk, fits, fallbackLength));
+
+  const pages: string[] = [];
+  let buffer: string[] = [];
+
+  for (const chunk of chunks) {
+    const candidate = [...buffer, chunk].join("\n\n");
+
+    if (buffer.length === 0 || fits(candidate)) {
+      buffer.push(chunk);
+      continue;
+    }
+
+    pages.push(buffer.join("\n\n"));
+    buffer = [chunk];
+  }
+
+  if (buffer.length > 0) {
+    pages.push(buffer.join("\n\n"));
+  }
+
+  return pages.length > 0 ? pages : ["本文がありません。"];
+}
+
 function measureMetrics(width: number) {
   if (width < 420) {
     return {
@@ -167,6 +294,7 @@ function BookReaderComponent({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const pageFrameRef = useRef<HTMLDivElement | null>(null);
+  const pageMeasureRef = useRef<HTMLParagraphElement | null>(null);
   const flipTimerRef = useRef<number | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -179,18 +307,34 @@ function BookReaderComponent({
   const [isFlipAnimating, setIsFlipAnimating] = useState(false);
 
   useEffect(() => {
-    if (!sourceText || !pageFrameRef.current) {
+    if (!sourceText || !pageFrameRef.current || !pageMeasureRef.current) {
       return;
     }
 
     const element = pageFrameRef.current;
+    const measurementElement = pageMeasureRef.current;
 
     const updateLayout = () => {
       const rect = element.getBoundingClientRect();
+
+      if (rect.width <= 0 || rect.height <= 0) {
+        return;
+      }
+
       const nextMetrics = measureMetrics(rect.width);
       const capacity = estimateCapacity(rect.width, rect.height, nextMetrics);
+      const fits = (content: string) => {
+        measurementElement.textContent = content;
 
-      setLayoutPages(paginateSourceText(sourceText, capacity));
+        return (
+          measurementElement.scrollWidth <=
+            measurementElement.clientWidth + MEASUREMENT_TOLERANCE_PX &&
+          measurementElement.scrollHeight <=
+            measurementElement.clientHeight + MEASUREMENT_TOLERANCE_PX
+        );
+      };
+
+      setLayoutPages(paginateSourceTextToFit(sourceText, capacity, fits));
     };
 
     updateLayout();
@@ -342,8 +486,6 @@ function BookReaderComponent({
   const targetLeaf = safePages[targetIndex];
   const underLeaf = flipState ? targetLeaf : currentLeaf;
   const nextFlip = flipState?.direction === 1;
-  const pageTextClass =
-    "book-reader-vertical h-full w-full whitespace-pre-wrap break-words px-3 py-4 text-[14px] leading-[1.62] tracking-[0.01em] text-stone-700 sm:px-4 sm:py-5 sm:text-[15px] sm:leading-[1.68] md:px-12 md:py-11 md:text-[20px] md:leading-[1.96] md:tracking-[0.04em]";
 
   return (
     <section
@@ -409,6 +551,10 @@ function BookReaderComponent({
             >
               <div className="absolute inset-y-0 left-0 w-[7%] bg-[linear-gradient(90deg,rgba(212,196,171,0.18),rgba(255,255,255,0))]" />
               <div className="absolute inset-y-0 right-0 w-[8%] bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(212,196,171,0.16))]" />
+
+              <div className="pointer-events-none absolute inset-0 opacity-0" aria-hidden="true">
+                <p ref={pageMeasureRef} className={pageTextClass} />
+              </div>
 
               <article className="relative z-10 h-full w-full overflow-hidden">
                 <p className={pageTextClass} style={{ overflow: "visible" }}>
