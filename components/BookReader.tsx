@@ -10,7 +10,7 @@ import {
   type MouseEvent,
   type TouchEvent,
 } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 type BookReaderProps = {
@@ -290,7 +290,6 @@ function BookReaderComponent({
   basePath,
   pageInfoLabel = "頁",
 }: BookReaderProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const pageFrameRef = useRef<HTMLDivElement | null>(null);
@@ -379,7 +378,7 @@ function BookReaderComponent({
       });
       setIsFlipAnimating(false);
 
-      router.push(`${basePath ?? pathname}?${params.toString()}`, { scroll: false });
+      window.history.pushState(null, "", `${basePath ?? pathname}?${params.toString()}`);
 
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => {
@@ -401,7 +400,6 @@ function BookReaderComponent({
       basePath,
       flipState,
       pathname,
-      router,
       safePages.length,
       safeVisiblePageIndex,
       searchParams,
