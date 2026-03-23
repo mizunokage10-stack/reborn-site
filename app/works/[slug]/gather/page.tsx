@@ -122,10 +122,6 @@ export default async function GatherPage({
     );
   }
 
-  const { count } = await supabase
-    .from("gather_requests")
-    .select("*", { count: "exact", head: true })
-    .eq("submission_id", id);
 
   return (
     <main
@@ -161,14 +157,10 @@ export default async function GatherPage({
                 </div>
                 <p className="leading-8 text-stone-600">
                   この本を他の読者と話したい、読書会があれば参加したい、そう思ったときに意思を残すためのページです。
-                  一定数集まった本について、運営が読書会や対話の場を検討できるようにしていきます。
+                  集まりたいという意思は運営側で確認し、読書会や対話の場を検討していきます。
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-5">
-                <div className="text-sm tracking-[0.16em] text-stone-500">現在の集まりたい人数</div>
-                <div className="mt-2 text-3xl font-semibold text-stone-900">{count ?? 0} 人</div>
-              </div>
 
               {resolvedSearchParams?.saved === "1" && (
                 <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">

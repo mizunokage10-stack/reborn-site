@@ -35,6 +35,14 @@ type ReadingRecord = {
   created_at: string;
 };
 
+type GatherRequest = {
+  id: number;
+  submission_id: number;
+  email: string;
+  notify_by_email: boolean | null;
+  created_at: string;
+};
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -134,6 +142,24 @@ export default async function AdminSubmissionsPage({
     revalidatePath("/records");
   }
 
+  async function deleteGatherRequest(formData: FormData) {
+    "use server";
+
+    const id = Number(formData.get("id"));
+
+    const { error } = await supabase
+      .from("gather_requests")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      throw new Error(`集いたいデータの削除に失敗しました: ${error.message}`);
+    }
+
+    revalidatePath("/admin/submissions");
+    revalidatePath("/works");
+  }
+
   const resolvedSearchParams = await searchParams;
   const statusFilter = resolvedSearchParams?.status ?? "all";
 
@@ -152,11 +178,19 @@ export default async function AdminSubmissionsPage({
   const readingRecords: ReadingRecord[] = recordsData ?? [];
   const submissionMap = new Map(submissions.map((item) => [item.id, item]));
 
+  const { data: gatherData, error: gatherError } = await supabase
+    .from("gather_requests")
+    .select("id, submission_id, email, notify_by_email, created_at")
+    .order("created_at", { ascending: false });
+
+  const gatherRequests: GatherRequest[] = gatherData ?? [];
+
   const unreviewedCount = submissions.filter((item) => item.status === "submitted").length;
   const pendingCount = submissions.filter((item) => item.status === "pending").length;
   const publishedCount = submissions.filter((item) => item.status === "published").length;
   const rejectedCount = submissions.filter((item) => item.status === "rejected").length;
   const readingRecordCount = readingRecords.length;
+  const gatherRequestCount = gatherRequests.length;
 
   const filteredSubmissions = submissions.filter((item) => {
     if (statusFilter === "all") return true;
@@ -166,13 +200,14 @@ export default async function AdminSubmissionsPage({
   return (
     <RebornShell>
       <div className="grid gap-4">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           {[
             { label: "未確認", value: String(unreviewedCount) },
             { label: "保留", value: String(pendingCount) },
             { label: "公開済み", value: String(publishedCount) },
             { label: "却下", value: String(rejectedCount) },
             { label: "記録", value: String(readingRecordCount) },
+            { label: "集い", value: String(gatherRequestCount) },
           ].map((item) => (
             <Card key={item.label} className="rounded-3xl border-stone-200 shadow-sm">
               <CardContent className="p-6">
@@ -395,6 +430,57 @@ export default async function AdminSubmissionsPage({
                       </Button>
                     </form>
                   </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+        <Card className="rounded-3xl border-stone-200 shadow-sm">
+          <CardHeader>
+            <CardTitle>集いたい管理</CardTitle>
+            <CardDescription>
+              「この本について集いたい」と寄せられた意思を確認し、必要に応じて削除できます。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            {gatherError && (
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                集いたいデータの読み込みに失敗しました: {gatherError.message}
+              </div>
+            )}
+
+            {!gatherError && gatherRequests.length === 0 && (
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
+                まだ寄せられた「集いたい」はありません。
+              </div>
+            )}
+
+            {gatherRequests.map((request) => {
+              const parent = submissionMap.get(request.submission_id);
+
+              return (
+                <div key={request.id} className="rounded-2xl border border-stone-200 p-4">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <div className="font-medium">{parent ? `『${parent.title}』への集いたい` : `作品ID ${request.submission_id} への集いたい`}</div>
+                      <div className="text-sm text-stone-500">
+                        {request.email} ・ {new Date(request.created_at).toLocaleString("ja-JP")}
+                      </div>
+                    </div>
+                    <Badge className="rounded-full">{request.notify_by_email ? "通知希望" : "通知不要"}</Badge>
+                  </div>
+
+                  <div className="mb-3 grid gap-2 text-sm text-stone-600 md:grid-cols-2">
+                    <div>元作品: {parent ? `${parent.title} / ${parent.pen_name}` : "不明"}</div>
+                    <div>メール通知: {request.notify_by_email ? "希望する" : "希望しない"}</div>
+                  </div>
+
+                  <form action={deleteGatherRequest}>
+                    <input type="hidden" name="id" value={request.id} />
+                    <Button type="submit" variant="outline" className="rounded-2xl">
+                      削除
+                    </Button>
+                  </form>
                 </div>
               );
             })}
