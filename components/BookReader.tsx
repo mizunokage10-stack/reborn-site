@@ -237,9 +237,9 @@ function BookReaderComponent({
               <div className="absolute inset-y-0 right-0 w-[8%] bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(212,196,171,0.16))]" />
 
               <article className="relative z-10 h-full w-full overflow-hidden">
-                <p className="book-reader-vertical h-full w-full overflow-hidden whitespace-pre-wrap break-words px-3 py-4 text-[15px] leading-[1.72] [word-break:break-all]">tracking-[0.02em] text-stone-700 sm:px-4 sm:py-5 sm:text-[15.5px] sm:leading-[1.78] md:px-12 md:py-11 md:text-[20px] md:leading-[2.02] md:tracking-[0.05em]">
-                  {underLeaf}
-                </p>
+              <p className="book-reader-vertical h-full w-full overflow-hidden whitespace-pre-wrap break-words px-3 py-4 text-[15px] leading-[1.72] tracking-[0.02em] text-stone-700 sm:px-4 sm:py-5 sm:text-[15.5px] sm:leading-[1.78] md:px-12 md:py-11 md:text-[20px] md:leading-[2.02] md:tracking-[1px]">
+  {underLeaf}
+</p>
               </article>
 
               <AnimatePresence>
@@ -287,9 +287,9 @@ function BookReaderComponent({
                         )}
                       />
 
-                      <p className="book-reader-vertical h-full w-full overflow-hidden whitespace-pre-wrap break-words px-3 py-4 text-[15px] leading-[1.72] [word-break:break-all]">tracking-[0.02em] text-stone-700 sm:px-4 sm:py-5 sm:text-[15.5px] sm:leading-[1.78] md:px-12 md:py-11 md:text-[20px] md:leading-[2.02] md:tracking-[0.05em]">
-                        {overlayLeaf}
-                      </p>
+<p className="book-reader-vertical h-full w-full overflow-hidden whitespace-pre-wrap break-words px-3 py-4 text-[15px] leading-[1.72] tracking-[0.02em] text-stone-700 sm:px-4 sm:py-5 sm:text-[15.5px] sm:leading-[1.78] md:px-12 md:py-11 md:text-[20px] md:leading-[2.02] md:tracking-[1px]">
+  {overlayLeaf}
+</p>
                     </article>
                   </motion.div>
                 ) : null}
