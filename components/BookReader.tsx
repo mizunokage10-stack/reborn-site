@@ -224,7 +224,7 @@ function BookReaderComponent({
                 goNext();
               }
             }}
-            className="relative min-h-[430px] cursor-pointer overflow-hidden rounded-[1.45rem] border border-[#e5d8c4] bg-[linear-gradient(180deg,#f7efe4_0%,#ece0ce_100%)] p-2.5 outline-none transition focus-visible:ring-2 focus-visible:ring-[#d3c09f] touch-pan-y sm:min-h-[500px] sm:p-3.5 md:min-h-[720px] md:p-7"
+            className="relative min-h-[480px] cursor-pointer overflow-hidden rounded-[1.45rem] border border-[#e5d8c4] bg-[linear-gradient(180deg,#f7efe4_0%,#ece0ce_100%)] p-2.5 outline-none transition focus-visible:ring-2 focus-visible:ring-[#d3c09f] touch-pan-y sm:min-h-[560px] sm:p-3.5 md:min-h-[780px] md:p-7"
             aria-label="左側タップまたは左スワイプで次のページ、右側タップまたは右スワイプで前のページ"
           >
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.62),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(123,95,55,0.06))]" />
@@ -236,8 +236,8 @@ function BookReaderComponent({
               <div className="absolute inset-y-0 left-0 w-[7%] bg-[linear-gradient(90deg,rgba(212,196,171,0.18),rgba(255,255,255,0))]" />
               <div className="absolute inset-y-0 right-0 w-[8%] bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(212,196,171,0.16))]" />
 
-              <article className="relative z-10 h-full w-full">
-                <p className="book-reader-vertical h-full w-full overflow-hidden whitespace-pre-wrap break-words px-3 py-4 text-[15px] leading-[1.72] tracking-[0.02em] text-stone-700 sm:px-4 sm:py-5 sm:text-[15.5px] sm:leading-[1.78] md:px-12 md:py-11 md:text-[20px] md:leading-[2.02] md:tracking-[0.05em]">
+              <article className="relative z-10 h-full w-full overflow-hidden">
+                <p className="book-reader-vertical h-full w-full overflow-hidden whitespace-pre-wrap break-words px-3 py-4 text-[15px] leading-[1.72] [word-break:break-all]">tracking-[0.02em] text-stone-700 sm:px-4 sm:py-5 sm:text-[15.5px] sm:leading-[1.78] md:px-12 md:py-11 md:text-[20px] md:leading-[2.02] md:tracking-[0.05em]">
                   {underLeaf}
                 </p>
               </article>
@@ -287,7 +287,7 @@ function BookReaderComponent({
                         )}
                       />
 
-                      <p className="book-reader-vertical h-full w-full overflow-hidden whitespace-pre-wrap break-words px-3 py-4 text-[15px] leading-[1.72] tracking-[0.02em] text-stone-700 sm:px-4 sm:py-5 sm:text-[15.5px] sm:leading-[1.78] md:px-12 md:py-11 md:text-[20px] md:leading-[2.02] md:tracking-[0.05em]">
+                      <p className="book-reader-vertical h-full w-full overflow-hidden whitespace-pre-wrap break-words px-3 py-4 text-[15px] leading-[1.72] [word-break:break-all]">tracking-[0.02em] text-stone-700 sm:px-4 sm:py-5 sm:text-[15.5px] sm:leading-[1.78] md:px-12 md:py-11 md:text-[20px] md:leading-[2.02] md:tracking-[0.05em]">
                         {overlayLeaf}
                       </p>
                     </article>
