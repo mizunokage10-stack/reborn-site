@@ -2,7 +2,6 @@ import { createClient } from "@supabase/supabase-js";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import BookReader from "@/components/BookReader";
-import { paginateVerticalJapaneseText } from "@/lib/reader-pagination";
 import Link from "next/link";
 
 type PublishedWork = {
@@ -92,11 +91,7 @@ export default async function WorkReadPage({
     );
   }
 
-  const pages = paginateVerticalJapaneseText(work.content);
-  const currentPage = Math.min(
-    Math.max(Number(resolvedSearchParams?.page ?? "1") || 1, 1),
-    pages.length
-  );
+  const currentPage = Math.max(Number(resolvedSearchParams?.page ?? "1") || 1, 1);
 
   return (
     <main className="min-h-screen bg-stone-50 px-4 py-6 md:px-6 md:py-8">
@@ -114,13 +109,8 @@ export default async function WorkReadPage({
         <Card className="rounded-[2rem] border-stone-200 shadow-sm">
           <CardContent className="p-6 md:p-10">
             <div className="mx-auto max-w-4xl space-y-8">
-              <div className="flex items-center justify-between gap-3 border-b border-stone-200 pb-4 text-sm text-stone-500">
-                <span>第 {currentPage} 頁</span>
-                <span>全 {pages.length} 頁</span>
-              </div>
-
               <BookReader
-                pages={pages}
+                sourceText={work.content}
                 currentPage={currentPage}
                 basePath={`/works/${slug}/read`}
                 pageInfoLabel="頁"

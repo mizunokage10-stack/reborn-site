@@ -11,11 +11,11 @@ import {
   type TouchEvent,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 type BookReaderProps = {
-  pages: string[];
+  pages?: string[];
+  sourceText?: string;
   className?: string;
   currentPage?: number;
   basePath?: string;
@@ -28,13 +28,16 @@ type FlipState = {
   targetIndex: number;
 };
 
-const SWIPE_THRESHOLD = 42;
-const SWIPE_VERTICAL_TOLERANCE = 28;
-
-const flipTransition = {
-  duration: 0.72,
-  ease: [0.22, 0.79, 0.24, 0.99] as const,
+type ReaderMetrics = {
+  fontSize: number;
+  columnGap: number;
+  paddingBlock: number;
+  paddingInline: number;
 };
+
+const SWIPE_THRESHOLD = 42;
+const SWIPE_VERTICAL_TOLERANCE = 30;
+const FLIP_DURATION_MS = 680;
 
 const textStyle = {
   fontFamily:
@@ -46,24 +49,171 @@ function clampPage(value: number, total: number) {
   return Math.min(Math.max(value, 0), total - 1);
 }
 
+function splitParagraph(paragraph: string, chunkLimit: number) {
+  if (paragraph.length <= chunkLimit) {
+    return [paragraph];
+  }
+
+  const sentences = paragraph.match(/[^。！？!?]+[。！？!?]?/g) ?? [paragraph];
+  const chunks: string[] = [];
+  let buffer = "";
+
+  for (const sentence of sentences) {
+    const next = `${buffer}${sentence}`;
+
+    if (buffer && next.length > chunkLimit) {
+      chunks.push(buffer.trim());
+      buffer = sentence;
+    } else {
+      buffer = next;
+    }
+  }
+
+  if (buffer.trim()) {
+    chunks.push(buffer.trim());
+  }
+
+  return chunks;
+}
+
+function paginateSourceText(sourceText: string, estimatedCapacity: number) {
+  const normalized = sourceText.replace(/\r\n/g, "\n").trim();
+
+  if (!normalized) {
+    return ["本文がありません。"];
+  }
+
+  const rawParagraphs = normalized
+    .split(/\n\s*\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const sentenceChunkLimit = Math.max(120, Math.floor(estimatedCapacity * 0.55));
+  const pageCharLimit = Math.max(220, estimatedCapacity);
+  const chunks = rawParagraphs.flatMap((paragraph) =>
+    splitParagraph(paragraph, sentenceChunkLimit)
+  );
+
+  const result: string[] = [];
+  let buffer: string[] = [];
+  let total = 0;
+
+  for (const chunk of chunks) {
+    const nextLength = total + chunk.length;
+
+    if (buffer.length > 0 && nextLength > pageCharLimit) {
+      result.push(buffer.join("\n\n"));
+      buffer = [chunk];
+      total = chunk.length;
+    } else {
+      buffer.push(chunk);
+      total = nextLength;
+    }
+  }
+
+  if (buffer.length > 0) {
+    result.push(buffer.join("\n\n"));
+  }
+
+  return result.length > 0 ? result : ["本文がありません。"];
+}
+
+function measureMetrics(width: number) {
+  if (width < 420) {
+    return {
+      fontSize: 14.5,
+      columnGap: 22,
+      paddingBlock: 14,
+      paddingInline: 12,
+    } satisfies ReaderMetrics;
+  }
+
+  if (width < 768) {
+    return {
+      fontSize: 15.5,
+      columnGap: 24,
+      paddingBlock: 18,
+      paddingInline: 16,
+    } satisfies ReaderMetrics;
+  }
+
+  return {
+    fontSize: 20,
+    columnGap: 40,
+    paddingBlock: 44,
+    paddingInline: 48,
+  } satisfies ReaderMetrics;
+}
+
+function estimateCapacity(width: number, height: number, metrics: ReaderMetrics) {
+  const usableWidth = Math.max(0, width - metrics.paddingInline * 2);
+  const usableHeight = Math.max(0, height - metrics.paddingBlock * 2);
+  const charsPerColumn = Math.max(1, Math.floor(usableHeight / metrics.fontSize));
+  const columnWidth = metrics.fontSize + metrics.columnGap;
+  const columns = Math.max(1, Math.floor(usableWidth / columnWidth));
+
+  return charsPerColumn * columns;
+}
+
 function BookReaderComponent({
   pages,
+  sourceText,
   className,
   currentPage = 1,
   basePath,
   pageInfoLabel = "頁",
 }: BookReaderProps) {
-  const shouldReduceMotion = useReducedMotion();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const pageFrameRef = useRef<HTMLDivElement | null>(null);
+  const flipTimerRef = useRef<number | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const safePages = useMemo(
-    () => (pages.length > 0 ? pages : ["本文がありません。"]),
+
+  const staticPages = useMemo(
+    () => (pages && pages.length > 0 ? pages : ["本文がありません。"]),
     [pages]
   );
-  const currentPageIndex = clampPage(currentPage - 1, safePages.length);
+  const [layoutPages, setLayoutPages] = useState<string[] | null>(null);
   const [flipState, setFlipState] = useState<FlipState | null>(null);
+  const [isFlipAnimating, setIsFlipAnimating] = useState(false);
+
+  useEffect(() => {
+    if (!sourceText || !pageFrameRef.current) {
+      return;
+    }
+
+    const element = pageFrameRef.current;
+
+    const updateLayout = () => {
+      const rect = element.getBoundingClientRect();
+      const nextMetrics = measureMetrics(rect.width);
+      const capacity = estimateCapacity(rect.width, rect.height, nextMetrics);
+
+      setLayoutPages(paginateSourceText(sourceText, capacity));
+    };
+
+    updateLayout();
+
+    const observer = new ResizeObserver(() => {
+      updateLayout();
+    });
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [sourceText]);
+
+  useEffect(() => {
+    return () => {
+      if (flipTimerRef.current) {
+        window.clearTimeout(flipTimerRef.current);
+      }
+    };
+  }, []);
+
+  const safePages = layoutPages && layoutPages.length > 0 ? layoutPages : staticPages;
+  const currentPageIndex = clampPage(currentPage - 1, safePages.length);
   const visiblePageIndex = flipState ? flipState.fromIndex : currentPageIndex;
   const safeVisiblePageIndex = clampPage(visiblePageIndex, safePages.length);
 
@@ -83,8 +233,25 @@ function BookReaderComponent({
         fromIndex: safeVisiblePageIndex,
         targetIndex: clamped,
       });
+      setIsFlipAnimating(false);
 
       router.push(`${basePath ?? pathname}?${params.toString()}`, { scroll: false });
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          setIsFlipAnimating(true);
+        });
+      });
+
+      if (flipTimerRef.current) {
+        window.clearTimeout(flipTimerRef.current);
+      }
+
+      flipTimerRef.current = window.setTimeout(() => {
+        setFlipState(null);
+        setIsFlipAnimating(false);
+        flipTimerRef.current = null;
+      }, FLIP_DURATION_MS);
     },
     [
       basePath,
@@ -173,9 +340,10 @@ function BookReaderComponent({
   const targetIndex = flipState?.targetIndex ?? safeVisiblePageIndex;
   const currentLeaf = safePages[safeVisiblePageIndex];
   const targetLeaf = safePages[targetIndex];
-  const isNextFlip = flipState?.direction === 1;
-  const overlayLeaf = flipState ? currentLeaf : null;
   const underLeaf = flipState ? targetLeaf : currentLeaf;
+  const nextFlip = flipState?.direction === 1;
+  const pageTextClass =
+    "book-reader-vertical h-full w-full whitespace-pre-wrap break-words px-3 py-4 text-[14px] leading-[1.62] tracking-[0.01em] text-stone-700 sm:px-4 sm:py-5 sm:text-[15px] sm:leading-[1.68] md:px-12 md:py-11 md:text-[20px] md:leading-[1.96] md:tracking-[0.04em]";
 
   return (
     <section
@@ -211,7 +379,10 @@ function BookReaderComponent({
       </div>
 
       <div className="rounded-[1.75rem] border border-white/55 bg-white/16 p-2 sm:p-3.5">
-        <div className="[perspective:2200px]">
+        <div
+          className="relative [perspective:1500px]"
+          style={{ transformStyle: "preserve-3d" }}
+        >
           <div
             role="button"
             tabIndex={0}
@@ -224,76 +395,64 @@ function BookReaderComponent({
                 goNext();
               }
             }}
-            className="relative min-h-[480px] cursor-pointer overflow-hidden rounded-[1.45rem] border border-[#e5d8c4] bg-[linear-gradient(180deg,#f7efe4_0%,#ece0ce_100%)] p-2.5 outline-none transition focus-visible:ring-2 focus-visible:ring-[#d3c09f] touch-pan-y sm:min-h-[560px] sm:p-3.5 md:min-h-[780px] md:p-7"
+            className="relative min-h-[430px] cursor-pointer overflow-hidden rounded-[1.45rem] border border-[#e5d8c4] bg-[linear-gradient(180deg,#fdfbf7_0%,#f2e9db_100%)] p-2.5 outline-none transition focus-visible:ring-2 focus-visible:ring-[#d3c09f] touch-pan-y sm:min-h-[500px] sm:p-3.5 md:min-h-[720px] md:p-7"
             aria-label="左側タップまたは左スワイプで次のページ、右側タップまたは右スワイプで前のページ"
           >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.62),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(123,95,55,0.06))]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.62),transparent_42%)]" />
             <div className="pointer-events-none absolute inset-y-4 left-1/2 w-px -translate-x-1/2 bg-[linear-gradient(180deg,transparent,rgba(162,131,87,0.55),transparent)] md:inset-y-8" />
 
-            <div className="absolute inset-y-4 left-3 right-3 rounded-[1.25rem] bg-[#f9f4eb] shadow-[inset_0_0_0_1px_rgba(214,198,174,0.82),0_10px_22px_rgba(108,82,46,0.07)] sm:left-4 sm:right-4 md:inset-y-9 md:left-10 md:right-10" />
+            <div className="absolute inset-y-4 left-3 right-3 rounded-[1.25rem] bg-[#fdfbf7] shadow-[inset_0_0_0_1px_rgba(214,198,174,0.82),0_10px_22px_rgba(108,82,46,0.07)] sm:left-4 sm:right-4 md:inset-y-9 md:left-10 md:right-10" />
 
-            <div className="absolute inset-y-5 left-4 right-4 overflow-hidden rounded-[1.1rem] border border-[#ece1d0] bg-[linear-gradient(180deg,#fffdf9_0%,#faf3e8_100%)] shadow-[0_12px_22px_rgba(110,84,49,0.07)] sm:left-5 sm:right-5 md:inset-y-11 md:left-12 md:right-12">
+            <div
+              ref={pageFrameRef}
+              className="absolute inset-y-5 left-4 right-4 overflow-visible rounded-[1.1rem] border border-[#ece1d0] bg-[linear-gradient(180deg,#fffdf9_0%,#faf3e8_100%)] shadow-[0_12px_22px_rgba(110,84,49,0.07)] sm:left-5 sm:right-5 md:inset-y-11 md:left-12 md:right-12"
+            >
               <div className="absolute inset-y-0 left-0 w-[7%] bg-[linear-gradient(90deg,rgba(212,196,171,0.18),rgba(255,255,255,0))]" />
               <div className="absolute inset-y-0 right-0 w-[8%] bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(212,196,171,0.16))]" />
 
               <article className="relative z-10 h-full w-full overflow-hidden">
-              <p className="book-reader-vertical h-full w-full overflow-hidden whitespace-pre-wrap break-words px-3 py-4 text-[15px] leading-[1.72] tracking-[0.02em] text-stone-700 sm:px-4 sm:py-5 sm:text-[15.5px] sm:leading-[1.78] md:px-12 md:py-11 md:text-[20px] md:leading-[2.02] md:tracking-[1px]">
-  {underLeaf}
-</p>
+                <p className={pageTextClass} style={{ overflow: "visible" }}>
+                  {underLeaf}
+                </p>
               </article>
 
-              <AnimatePresence>
-                {flipState && overlayLeaf ? (
-                  <motion.div
-                    key={`${safeVisiblePageIndex}-${targetIndex}`}
-                    initial={
-                      shouldReduceMotion
-                        ? { opacity: 0 }
-                        : { rotateY: 0, x: "0%", opacity: 1 }
-                    }
-                    animate={
-                      shouldReduceMotion
-                        ? { opacity: 1 }
-                        : isNextFlip
-                          ? { rotateY: 168, x: "3.5%", opacity: 0.94 }
-                          : { rotateY: -168, x: "-3.5%", opacity: 0.94 }
-                    }
-                    exit={{ opacity: 0 }}
-                    transition={flipTransition}
-                    onAnimationComplete={() => {
-                      setFlipState(null);
-                    }}
-                    className="absolute inset-0 z-20"
-                    style={{
-                      transformStyle: "preserve-3d",
-                      transformOrigin: isNextFlip ? "right center" : "left center",
-                    }}
-                  >
-                    <article className="relative h-full w-full overflow-hidden rounded-[1.1rem] border border-[#eadfce] bg-[linear-gradient(180deg,#fffefb_0%,#f9f3e9_100%)] shadow-[0_16px_28px_rgba(111,83,47,0.14)]">
-                      <div
-                        className={cn(
-                          "absolute inset-y-0 w-[12%]",
-                          isNextFlip
-                            ? "left-0 bg-[linear-gradient(90deg,rgba(126,94,53,0.18),rgba(255,255,255,0))]"
-                            : "right-0 bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(126,94,53,0.18))]"
-                        )}
-                      />
-                      <div
-                        className={cn(
-                          "absolute inset-y-0 w-[10%]",
-                          isNextFlip
-                            ? "right-0 bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(214,197,171,0.2))]"
-                            : "left-0 bg-[linear-gradient(90deg,rgba(214,197,171,0.2),rgba(255,255,255,0))]"
-                        )}
-                      />
-
-<p className="book-reader-vertical h-full w-full overflow-hidden whitespace-pre-wrap break-words px-3 py-4 text-[15px] leading-[1.72] tracking-[0.02em] text-stone-700 sm:px-4 sm:py-5 sm:text-[15.5px] sm:leading-[1.78] md:px-12 md:py-11 md:text-[20px] md:leading-[2.02] md:tracking-[1px]">
-  {overlayLeaf}
-</p>
-                    </article>
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
+              {flipState ? (
+                <div
+                  className={cn(
+                    "absolute inset-0 z-20 transition-transform",
+                    isFlipAnimating
+                      ? nextFlip
+                        ? "book-reader-flip-next"
+                        : "book-reader-flip-prev"
+                      : "book-reader-flip-idle"
+                  )}
+                  style={{
+                    transformStyle: "preserve-3d",
+                    transitionDuration: `${FLIP_DURATION_MS}ms`,
+                    transformOrigin: nextFlip ? "right center" : "left center",
+                  }}
+                >
+                  <article className="relative h-full w-full overflow-hidden rounded-[1.1rem] border border-[#eadfce] bg-[linear-gradient(180deg,#fffefb_0%,#f9f3e9_100%)] shadow-[0_16px_28px_rgba(111,83,47,0.14)] [backface-visibility:hidden]">
+                    <div
+                      className={cn(
+                        "absolute inset-y-0 w-[12%]",
+                        nextFlip
+                          ? "left-0 bg-[linear-gradient(90deg,rgba(126,94,53,0.18),rgba(255,255,255,0))]"
+                          : "right-0 bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(126,94,53,0.18))]"
+                      )}
+                    />
+                    <div
+                      className={cn(
+                        "absolute inset-y-0 w-[10%]",
+                        nextFlip
+                          ? "right-0 bg-[linear-gradient(90deg,rgba(255,255,255,0),rgba(214,197,171,0.2))]"
+                          : "left-0 bg-[linear-gradient(90deg,rgba(214,197,171,0.2),rgba(255,255,255,0))]"
+                      )}
+                    />
+                    <p className={pageTextClass}>{currentLeaf}</p>
+                  </article>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

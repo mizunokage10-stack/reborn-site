@@ -137,4 +137,16 @@
     overflow-wrap: anywhere;
     word-break: break-word;
   }
+
+  .book-reader-flip-idle {
+    transform: rotateY(0deg);
+  }
+
+  .book-reader-flip-next {
+    transform: rotateY(-180deg);
+  }
+
+  .book-reader-flip-prev {
+    transform: rotateY(180deg);
+  }
 }
