@@ -1,5 +1,5 @@
 const DEFAULT_SENTENCE_CHUNK_LIMIT = 300;
-const DEFAULT_PAGE_CHAR_LIMIT = 640;
+const DEFAULT_PAGE_CHAR_LIMIT = 400;
 
 function splitParagraph(paragraph: string, sentenceChunkLimit: number) {
   if (paragraph.length <= sentenceChunkLimit) {
