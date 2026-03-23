@@ -128,3 +128,13 @@
     @apply font-sans;
   }
 }
+
+@layer utilities {
+  .book-reader-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    -webkit-writing-mode: vertical-rl;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}

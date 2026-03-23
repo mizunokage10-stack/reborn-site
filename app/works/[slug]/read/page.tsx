@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import BookReader from "@/components/BookReader";
 import Link from "next/link";
 
 type PublishedWork = {
@@ -157,9 +158,6 @@ export default async function WorkReadPage({
     Math.max(Number(resolvedSearchParams?.page ?? "1") || 1, 1),
     pages.length
   );
-  const currentContent = pages[currentPage - 1];
-  const prevPage = currentPage > 1 ? currentPage - 1 : null;
-  const nextPage = currentPage < pages.length ? currentPage + 1 : null;
 
   return (
     <main className="min-h-screen bg-stone-50 px-4 py-6 md:px-6 md:py-8">
@@ -182,45 +180,12 @@ export default async function WorkReadPage({
                 <span>全 {pages.length} 頁</span>
               </div>
 
-              <div
-                className="min-h-[58vh] whitespace-pre-wrap text-stone-800"
-                style={{
-                  fontFamily: '"MS Mincho", "MS 明朝", "Hiragino Mincho ProN", "Yu Mincho", "Times New Roman", serif',
-                  fontSize: "10.5pt",
-                  lineHeight: "2.25",
-                  letterSpacing: "0.01em",
-                }}
-              >
-                {currentContent}
-              </div>
-
-              <div className="flex items-center justify-between gap-3 border-t border-stone-200 pt-4">
-                <div>
-                  {prevPage ? (
-                    <Button asChild variant="outline" className="rounded-2xl">
-                      <Link href={`/works/${slug}/read?page=${prevPage}`}>前の頁</Link>
-                    </Button>
-                  ) : (
-                    <Button disabled variant="outline" className="rounded-2xl">
-                      前の頁
-                    </Button>
-                  )}
-                </div>
-
-                <div className="text-sm text-stone-400">{currentPage} / {pages.length}</div>
-
-                <div>
-                  {nextPage ? (
-                    <Button asChild className="rounded-2xl">
-                      <Link href={`/works/${slug}/read?page=${nextPage}`}>次の頁</Link>
-                    </Button>
-                  ) : (
-                    <Button disabled className="rounded-2xl">
-                      次の頁
-                    </Button>
-                  )}
-                </div>
-              </div>
+              <BookReader
+                pages={pages}
+                currentPage={currentPage}
+                basePath={`/works/${slug}/read`}
+                pageInfoLabel="Leaf"
+              />
             </div>
           </CardContent>
         </Card>
