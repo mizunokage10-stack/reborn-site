@@ -302,6 +302,7 @@ function BookReaderComponent({
     [pages]
   );
   const [layoutPages, setLayoutPages] = useState<string[] | null>(null);
+  const [pendingPage, setPendingPage] = useState<number | null>(null);
   const [flipState, setFlipState] = useState<FlipState | null>(null);
   const [isFlipAnimating, setIsFlipAnimating] = useState(false);
 
@@ -355,8 +356,11 @@ function BookReaderComponent({
     };
   }, []);
 
+  const pageFromUrl = Number(searchParams.get("page") ?? String(currentPage)) || currentPage;
+  const resolvedPage =
+    pendingPage !== null && pendingPage !== pageFromUrl ? pendingPage : pageFromUrl;
   const safePages = layoutPages && layoutPages.length > 0 ? layoutPages : staticPages;
-  const currentPageIndex = clampPage(currentPage - 1, safePages.length);
+  const currentPageIndex = clampPage(resolvedPage - 1, safePages.length);
   const visiblePageIndex = flipState ? flipState.fromIndex : currentPageIndex;
   const safeVisiblePageIndex = clampPage(visiblePageIndex, safePages.length);
 
@@ -376,6 +380,7 @@ function BookReaderComponent({
         fromIndex: safeVisiblePageIndex,
         targetIndex: clamped,
       });
+      setPendingPage(clamped + 1);
       setIsFlipAnimating(false);
 
       window.history.pushState(null, "", `${basePath ?? pathname}?${params.toString()}`);
